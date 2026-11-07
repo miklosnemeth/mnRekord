@@ -37,6 +37,7 @@ pub struct Rec {
 pub struct Picker {
     pub tex: egui::TextureHandle,
     pub windows: Vec<Rect>,
+    pub infos: Vec<win::WindowInfo>,
     pub press: Option<egui::Pos2>,
 }
 
@@ -97,6 +98,12 @@ pub struct App {
     pub hot: Arc<HotState>,
     pub system: Option<Arc<AudioSource>>,
     pub preview: Option<Preview>,
+    /// The window the region was picked from, if it was picked by a click on a window.
+    pub picked_window: Option<win::WindowInfo>,
+    pub tray: Option<crate::tray::Tray>,
+    /// A GIF being made in the background: its result arrives here.
+    pub gif_job: Option<std::sync::mpsc::Receiver<Result<PathBuf, String>>>,
+    pub gif_msg: Option<String>,
     /// The window title last sent, so it is only set when it changes.
     pub cur_title: String,
     pub demo_tex: Option<egui::TextureHandle>,
@@ -152,6 +159,10 @@ impl App {
             hot,
             system: None,
             preview: None,
+            picked_window: None,
+            tray: None,
+            gif_job: None,
+            gif_msg: None,
             cur_title: String::new(),
             demo_tex: None,
             mode: Mode::Idle,
@@ -177,6 +188,7 @@ impl App {
         }
         if !demo {
             app.border = win::RegionBorder::new();
+            app.tray = crate::tray::Tray::new(app.cmd_tx.clone(), cc.egui_ctx.clone());
             app.start_hotkeys();
             let (tx, c) = (app.cmd_tx.clone(), cc.egui_ctx.clone());
             ipc::serve_pipe(tx, move || c.request_repaint());
@@ -237,7 +249,9 @@ impl App {
             && self.settings.record_screen
             && !matches!(self.mode, Mode::PreparePick(_) | Mode::Picking(_))
             && !self.monitors.contains(&self.region());
-        let r = self.region();
+        // A recording that follows a window moves the indicator with it.
+        let live = self.rec.as_ref().and_then(|r| *r.session.shared.live_region.lock().unwrap());
+        let r = live.unwrap_or_else(|| self.region());
         if let Some(b) = &mut self.border {
             if show {
                 b.show(r);
@@ -410,8 +424,12 @@ impl App {
             region: self.settings.record_screen.then(|| self.region()),
             fps: self.settings.max_fps,
             quality: self.settings.video_quality,
+            hardware: self.settings.hardware_encoder,
+            follow: self.follow_target(),
+            split_seconds: self.settings.split_seconds,
             system: self.system.clone(),
             restore_cursor: self.settings.restore_cursor,
+            cursor: crate::screen::CursorStyle { show: self.settings.show_cursor, highlight: self.settings.highlight_cursor },
         };
         self.settings.recovery_location = temp_dir.to_string_lossy().into_owned();
         self.persist();
@@ -476,6 +494,58 @@ impl App {
         Some((dir, result, frames))
     }
 
+    /// Makes a GIF next to the last recording, on a worker thread.
+    pub fn make_gif(&mut self) {
+        let Some(src) = self.last_saved.clone() else { return };
+        if self.gif_job.is_some() {
+            return;
+        }
+        let dest = recorder::unique_ext(src.with_extension("gif"));
+        let (tx, rx) = channel();
+        let ctx = self.ctx.clone();
+        std::thread::spawn(move || {
+            let r = crate::gif_export::export(&src, &dest).map(|_| dest.clone());
+            if r.is_err() {
+                let _ = std::fs::remove_file(&dest);
+            }
+            let _ = tx.send(r);
+            ctx.request_repaint();
+        });
+        self.gif_job = Some(rx);
+        self.gif_msg = Some("Making the GIF...".into());
+    }
+
+    fn poll_gif(&mut self) {
+        let Some(rx) = &self.gif_job else { return };
+        if let Ok(r) = rx.try_recv() {
+            self.gif_job = None;
+            self.gif_msg = Some(match r {
+                Ok(p) => {
+                    win::show_in_folder(&p);
+                    format!("GIF saved: {}", p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+                }
+                Err(e) => format!("The GIF could not be made: {e}"),
+            });
+        }
+    }
+
+    /// The window to follow while recording, with where the region sits in it.
+    fn follow_target(&self) -> Option<recorder::Follow> {
+        if !self.settings.follow_window || !self.settings.record_screen {
+            return None;
+        }
+        let w = self.picked_window.as_ref()?;
+        let fr = win::window_frame(w.hwnd)?;
+        let r = self.region();
+        Some(recorder::Follow { hwnd: w.hwnd, offset: (r.x - fr.x, r.y - fr.y) })
+    }
+
+    fn auto_name(&self) -> String {
+        let t = unsafe { windows::Win32::System::SystemInformation::GetLocalTime() };
+        let title = self.picked_window.as_ref().map(|w| w.title.as_str()).unwrap_or("");
+        recorder::file_name(&self.settings.name_template, (t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond), title)
+    }
+
     pub fn stop_recording(&mut self, force_auto_name: bool) {
         let error = self.rec.as_ref().and_then(|r| r.session.shared.error.lock().unwrap().clone());
         let Some((dir, result, frames)) = self.end_session() else { return };
@@ -495,7 +565,7 @@ impl App {
             self.notice = Some(format!("An error occurred in the Recorder: {e}. It stopped and saved the current recording."));
         }
         if self.settings.prompt_for_name && !force_auto_name {
-            let picked = rfd::FileDialog::new().add_filter("MP4 video", &["mp4"]).set_file_name(auto_name()).set_directory(&self.settings.output_folder).save_file();
+            let picked = rfd::FileDialog::new().add_filter("MP4 video", &["mp4"]).set_file_name(self.auto_name()).set_directory(&self.settings.output_folder).save_file();
             match picked {
                 Some(p) => self.save_to(&dir, p.with_extension("mp4")),
                 None => self.prompt = Some(Prompt::SaveOrDelete(dir)),
@@ -506,18 +576,19 @@ impl App {
                 self.notice = Some(format!("The output folder isn't available ({e}). The recording can be recovered at the next start."));
                 return;
             }
-            let dest = recorder::unique_path(folder.join(auto_name()));
+            let dest = recorder::unique_path(folder.join(self.auto_name()));
             self.save_to(&dir, dest);
         }
     }
 
     pub fn save_to(&mut self, dir: &std::path::Path, dest: PathBuf) {
         match recorder::save_files(dir, &dest) {
-            Ok(_) => {
+            Ok(saved) => {
                 self.clear_recovery();
-                self.last_saved = Some(dest.clone());
+                let first = saved.into_iter().next().unwrap_or(dest);
+                self.last_saved = Some(first.clone());
                 if self.settings.open_on_stop {
-                    win::open_path(&dest);
+                    win::open_path(&first);
                 }
                 if self.settings.exit_on_stop && self.notice.is_none() {
                     self.ctx.send_viewport_cmd(egui::ViewportCommand::Close);
@@ -579,6 +650,19 @@ impl App {
     fn handle(&mut self, c: Cmd) {
         match c {
             Cmd::Toggle | Cmd::Record => self.start_recording(),
+            Cmd::ToggleRecording => {
+                if self.rec.is_some() {
+                    self.stop_recording(false);
+                } else {
+                    self.start_recording();
+                }
+            }
+            Cmd::Show => {
+                win::restore_window(self.hwnd);
+                self.ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+                self.ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+            }
+            Cmd::Quit => self.ctx.send_viewport_cmd(egui::ViewportCommand::Close),
             Cmd::Pause => {
                 if let Some(r) = &self.rec {
                     r.session.shared.pause();
@@ -602,6 +686,16 @@ impl App {
             }
             Cmd::SetOutput(p) => self.settings.output_folder = p,
             Cmd::SetRegion(x, y, w, h) => self.set_region(Rect::new(x, y, w, h)),
+            Cmd::FollowWindow(text) => {
+                let hwnd = windows::Win32::Foundation::HWND(self.hwnd as *mut _);
+                let needle = text.to_lowercase();
+                if let Some(w) = win::visible_windows(hwnd).into_iter().find(|w| w.title.to_lowercase().contains(&needle)) {
+                    self.set_region(w.rect);
+                    self.picked_window = Some(w);
+                    self.settings.follow_window = true;
+                    self.persist();
+                }
+            }
             Cmd::SystemAudio(on) => self.set_system_audio(on),
             Cmd::Screen(on) => self.settings.record_screen = on,
             Cmd::DrawRegion => {
@@ -644,19 +738,27 @@ impl App {
         };
         let img = egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], &px);
         let tex = self.ctx.load_texture("picker", img, egui::TextureOptions::LINEAR);
-        let windows = win::visible_windows(windows::Win32::Foundation::HWND(self.hwnd as *mut _));
+        let infos = win::visible_windows(windows::Win32::Foundation::HWND(self.hwnd as *mut _));
+        let windows = infos.iter().map(|w| w.rect).collect();
         self.stop_preview();
         self.saved_rect = Some(win::window_rect(self.hwnd));
         self.ctx.send_viewport_cmd(egui::ViewportCommand::Decorations(false));
         self.ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
         self.place = Some((vs, true, 6));
-        self.mode = Mode::Picking(Picker { tex, windows, press: None });
+        self.mode = Mode::Picking(Picker { tex, windows, infos, press: None });
     }
 
     pub fn end_pick(&mut self, picked: Option<Rect>) {
+        let infos = match &self.mode {
+            Mode::Picking(p) => p.infos.clone(),
+            _ => Vec::new(),
+        };
         self.mode = Mode::Idle;
         win::mask_thread_windows(false);
         if let Some(r) = picked {
+            // A click on a window picks it (possibly fitted to the locked ratio); a drawn frame picks none.
+            let ratio = self.settings.aspect;
+            self.picked_window = infos.into_iter().find(|w| w.rect == r || ratio.is_some_and(|(a, b)| w.rect.fit_ratio(a, b) == r));
             self.set_region_fitted(r);
         }
         self.restore_main_window();
@@ -684,6 +786,7 @@ impl App {
         self.update_preview_texture();
         self.tick_recording();
         self.sync_title(ctx);
+        self.poll_gif();
 
         // Closing while recording: pause and ask, as the original does.
         if ctx.input(|i| i.viewport().close_requested()) && self.rec.is_some() && self.prompt.is_none() {
@@ -701,6 +804,9 @@ impl App {
 
     /// The title shows the recording state, so the taskbar tells it even when the window is minimized.
     fn sync_title(&mut self, ctx: &egui::Context) {
+        if let Some(t) = &mut self.tray {
+            t.set_recording(self.rec.is_some());
+        }
         let title = match &self.rec {
             Some(r) if r.session.shared.clock.running() => format!("● {}  {APP_NAME}", r.timer_text),
             Some(r) => format!("Paused {}  {APP_NAME}", r.timer_text),
@@ -791,10 +897,6 @@ impl App {
 
 const TIMER_REFRESH: f32 = 0.5;
 
-fn auto_name() -> String {
-    let t = unsafe { windows::Win32::System::SystemInformation::GetLocalTime() };
-    recorder::generated_name((t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute, t.wSecond))
-}
 
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {

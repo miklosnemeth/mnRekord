@@ -3,9 +3,11 @@ mod app;
 mod audio;
 mod config;
 mod encode;
+mod gif_export;
 mod ipc;
 mod recorder;
 mod screen;
+mod tray;
 mod ui;
 mod win;
 
@@ -15,6 +17,18 @@ use windows::Win32::UI::HiDpi::*;
 fn main() -> eframe::Result<()> {
     unsafe {
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
+    }
+    // `mnrekord --gif in.mp4 out.gif`: make a GIF from a recording and exit.
+    let raw: Vec<String> = std::env::args().collect();
+    if let Some(i) = raw.iter().position(|a| a == "--gif") {
+        if let (Some(src), Some(dest)) = (raw.get(i + 1), raw.get(i + 2)) {
+            let r = gif_export::export(std::path::Path::new(src), std::path::Path::new(dest));
+            let _ = std::fs::write(format!("{dest}.log"), match r {
+                Ok(()) => "ok".to_string(),
+                Err(e) => e,
+            });
+        }
+        return Ok(());
     }
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let mut opts = app::Launch::default();

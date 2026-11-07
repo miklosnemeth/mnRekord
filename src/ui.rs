@@ -218,6 +218,15 @@ impl App {
                     win::show_in_folder(&p);
                 }
             });
+            ui.horizontal(|ui| {
+                let busy = self.gif_job.is_some();
+                if ui.add_enabled(!busy, egui::Button::new(RichText::new("Make GIF").small()).corner_radius(5)).on_hover_text("An animated GIF of the last recording (up to 30 s, 640 px wide)").clicked() {
+                    self.make_gif();
+                }
+                if let Some(m) = &self.gif_msg {
+                    ui.label(RichText::new(m).small().color(MUTED));
+                }
+            });
         }
         if let Some(n) = &self.notice {
             ui.label(RichText::new(n).small().color(CORAL));
@@ -389,6 +398,7 @@ impl App {
             for (i, m) in self.monitors.clone().iter().enumerate() {
                 let selected = region == *m;
                 if ui.selectable_label(selected, format!("Screen {}", i + 1)).clicked() {
+                    self.picked_window = None;
                     self.set_region_fitted(*m);
                 }
             }
@@ -459,6 +469,14 @@ impl App {
                 }
             });
         });
+        if let Some(title) = self.picked_window.as_ref().map(|w| w.title.clone()) {
+            ui.horizontal(|ui| {
+                ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Follow").small().color(MUTED)));
+                toggle(ui, &mut self.settings.follow_window).on_hover_text("The recorded frame moves with the window it was picked from");
+                let short: String = title.chars().take(24).collect();
+                ui.label(RichText::new(short).small().color(MUTED));
+            });
+        }
     }
 
     // ---- preferences ----
@@ -511,10 +529,12 @@ impl App {
 
     fn prefs_general(&mut self, ui: &mut egui::Ui) {
         let s = &mut self.settings;
-        let rows: [(&str, &mut bool); 7] = [
+        let rows: [(&str, &mut bool); 9] = [
             ("Show recorder countdown", &mut s.show_countdown),
             ("Do not capture recorder on screen", &mut s.use_window_mask),
             ("Restore cursor location after pause", &mut s.restore_cursor),
+            ("Show the mouse pointer in the recording", &mut s.show_cursor),
+            ("Highlight the pointer and clicks", &mut s.highlight_cursor),
             ("Exit after stopped", &mut s.exit_on_stop),
             ("Open recording after stopped", &mut s.open_on_stop),
             ("Show region indicator", &mut s.show_region_indicator),
@@ -542,12 +562,35 @@ impl App {
             ui.label("Quality");
             ui.add(egui::Slider::new(&mut self.settings.video_quality, 1..=100));
         });
+        ui.horizontal(|ui| {
+            ui.label("Start a new file every");
+            let mut minutes = self.settings.split_seconds / 60;
+            if ui.add(egui::DragValue::new(&mut minutes).range(0..=240).suffix(" min")).changed() {
+                self.settings.split_seconds = minutes * 60;
+            }
+            ui.label(RichText::new("(0 = one file)").small().color(MUTED));
+        });
+        ui.horizontal(|ui| {
+            ui.label("Use the graphics card to encode, when possible");
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                toggle(ui, &mut self.settings.hardware_encoder);
+            });
+        });
+        let name = crate::encode::ENCODER_NAME.lock().unwrap().clone();
+        if !name.is_empty() {
+            ui.label(RichText::new(format!("Encoder of the last recording: {name}")).small().color(MUTED));
+        }
     }
 
     fn prefs_files(&mut self, ui: &mut egui::Ui) {
         ui.label(RichText::new("Name").font(bold(15.0)));
         ui.radio_value(&mut self.settings.prompt_for_name, false, "Automatic file name");
         ui.radio_value(&mut self.settings.prompt_for_name, true, "Prompt for file name");
+        ui.horizontal(|ui| {
+            ui.label("File name template");
+            ui.add(egui::TextEdit::singleline(&mut self.settings.name_template).desired_width(220.0));
+        });
+        ui.label(RichText::new("{date}  {time}  {window}  (the window picked on screen, or \"screen\")").small().color(MUTED));
         ui.separator();
         folder_row(ui, "Default output folder", &mut self.settings.output_folder);
         folder_row(ui, "Temporary storage folder", &mut self.settings.temp_folder);

@@ -23,9 +23,15 @@ pub enum Cmd {
     SetFps(u32),
     SetOutput(String),
     SetRegion(i32, i32, i32, i32),
+    /// Record the first visible window whose title contains this text, and follow it.
+    FollowWindow(String),
     SystemAudio(bool),
     Screen(bool),
     DrawRegion,
+    /// From the tray menu.
+    Show,
+    ToggleRecording,
+    Quit,
 }
 
 /// Same names as the original's command line (with `/` or `-`).
@@ -56,6 +62,12 @@ pub fn parse_args(args: &[String]) -> Vec<Cmd> {
             "setoutputpath" => {
                 if let Some(s) = val {
                     out.push(Cmd::SetOutput(s));
+                }
+                i += 1;
+            }
+            "followwindow" => {
+                if let Some(s) = val {
+                    out.push(Cmd::FollowWindow(s));
                 }
                 i += 1;
             }

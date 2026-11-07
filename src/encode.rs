@@ -3,9 +3,13 @@
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread::JoinHandle;
-use windows::core::{Result as WinResult, HSTRING};
+use std::sync::Mutex;
+use windows::core::{Interface, Result as WinResult, GUID, HSTRING};
 use windows::Win32::Media::MediaFoundation::*;
 use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
+
+/// Name of the video encoder the last recording opened (for the preferences).
+pub static ENCODER_NAME: Mutex<String> = Mutex::new(String::new());
 
 pub const AUDIO_RATE: u32 = 48_000;
 pub const AUDIO_CHANNELS: u32 = 2;
@@ -24,6 +28,8 @@ pub struct VideoSpec {
     pub bits_per_pixel: f64,
     /// 1..100, for the encoder's quality-based rate control.
     pub quality: u32,
+    /// Let Media Foundation pick a hardware encoder (GPU) when there is one.
+    pub hardware: bool,
 }
 
 pub struct Writer {
@@ -118,12 +124,29 @@ unsafe fn quality_params(quality: u32) -> WinResult<IMFAttributes> {
     Ok(params)
 }
 
+/// The friendly name of the transform that encodes the video stream, when the writer tells.
+unsafe fn encoder_name(writer: &IMFSinkWriter, stream: u32) -> Option<String> {
+    let mut raw = std::ptr::null_mut();
+    writer.GetServiceForStream(stream, &GUID::zeroed(), &IMFTransform::IID, &mut raw).ok()?;
+    if raw.is_null() {
+        return None;
+    }
+    let t: IMFTransform = Interface::from_raw(raw);
+    let attrs = t.GetAttributes().ok()?;
+    let mut name = windows::core::PWSTR::null();
+    let mut len = 0;
+    attrs.GetAllocatedString(&MFT_FRIENDLY_NAME_Attribute, &mut name, &mut len).ok()?;
+    let s = name.to_string().ok();
+    windows::Win32::System::Com::CoTaskMemFree(Some(name.0 as *const _));
+    s
+}
+
 unsafe fn open(path: &Path, v: &VideoSpec, audio: bool) -> WinResult<Sink> {
     let mut attrs: Option<IMFAttributes> = None;
     MFCreateAttributes(&mut attrs, 3)?;
     let attrs = attrs.unwrap();
     attrs.SetGUID(&MF_TRANSCODE_CONTAINERTYPE, &MFTranscodeContainerType_FMPEG4)?;
-    attrs.SetUINT32(&MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, 1)?;
+    attrs.SetUINT32(&MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, v.hardware as u32)?;
     let writer = MFCreateSinkWriterFromURL(&HSTRING::from(path.as_os_str()), None, &attrs)?;
 
     let size = pack(v.width, v.height);
@@ -176,6 +199,7 @@ unsafe fn open(path: &Path, v: &VideoSpec, audio: bool) -> WinResult<Sink> {
         None
     };
     writer.BeginWriting()?;
+    *ENCODER_NAME.lock().unwrap() = encoder_name(&writer, video).unwrap_or_else(|| "unknown".into());
     Ok(Sink { writer, video, audio })
 }
 

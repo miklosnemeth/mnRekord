@@ -8,6 +8,7 @@ use windows::Win32::Graphics::Direct3D11::*;
 use windows::Win32::Graphics::Dxgi::Common::*;
 use windows::Win32::Graphics::Dxgi::*;
 use windows::Win32::Graphics::Gdi::*;
+use windows::Win32::UI::Input::KeyboardAndMouse::GetAsyncKeyState;
 use windows::Win32::UI::WindowsAndMessaging::*;
 
 struct Output {
@@ -19,8 +20,20 @@ struct Output {
     rect: Rect,
 }
 
+/// What the recording shows of the mouse pointer.
+#[derive(Clone, Copy, Debug)]
+pub struct CursorStyle {
+    pub show: bool,
+    /// A soft halo around the pointer and a ring while a mouse button is down.
+    pub highlight: bool,
+}
+
 pub struct ScreenGrabber {
     region: Rect,
+    cursor: CursorStyle,
+    /// The region moved since the last frame, so the desktop is read again in full.
+    moved: bool,
+    all_outputs: bool,
     outputs: Vec<Output>,
     base: Vec<u8>,
     dc: HDC,
@@ -33,7 +46,8 @@ pub struct ScreenGrabber {
 unsafe impl Send for ScreenGrabber {}
 
 impl ScreenGrabber {
-    pub fn new(region: Rect) -> Result<Self, String> {
+    /// `all_outputs`: also watch the monitors outside the region, for a region that moves between them.
+    pub fn new(region: Rect, cursor: CursorStyle, all_outputs: bool) -> Result<Self, String> {
         unsafe {
             let screen = GetDC(None);
             let dc = CreateCompatibleDC(Some(screen));
@@ -45,6 +59,9 @@ impl ScreenGrabber {
             let old = SelectObject(dc, dib.into());
             let mut g = Self {
                 region,
+                cursor,
+                all_outputs,
+                moved: false,
                 outputs: Vec::new(),
                 base: vec![0; (region.w * region.h * 4) as usize],
                 dc,
@@ -68,7 +85,7 @@ impl ScreenGrabber {
                 o += 1;
                 let desc = output.GetDesc()?;
                 let rect = win::rect_of(&desc.DesktopCoordinates);
-                if rect.intersect(&self.region).is_none() {
+                if !self.all_outputs && rect.intersect(&self.region).is_none() {
                     continue;
                 }
                 if desc.Rotation != DXGI_MODE_ROTATION_IDENTITY && desc.Rotation != DXGI_MODE_ROTATION_UNSPECIFIED {
@@ -99,14 +116,29 @@ impl ScreenGrabber {
         Ok(())
     }
 
+    /// Moves the region (same size), for recordings that follow a window.
+    pub fn move_to(&mut self, x: i32, y: i32) {
+        if (x, y) != (self.region.x, self.region.y) {
+            self.region.x = x;
+            self.region.y = y;
+            self.moved = true;
+        }
+    }
+
     /// Latest picture of the region with the cursor, as top-down BGRA (stride = width * 4).
     pub fn frame(&mut self) -> &[u8] {
         let (w, h) = (self.region.w, self.region.h);
         unsafe {
-            if self.gdi_only {
+            if self.gdi_only || self.moved {
+                // The duplication only reports changes, so after a move the region is read directly.
                 let screen = GetDC(None);
                 let _ = BitBlt(self.dc, 0, 0, w, h, Some(screen), self.region.x, self.region.y, SRCCOPY);
                 ReleaseDC(None, screen);
+                if !self.gdi_only {
+                    let _ = GdiFlush();
+                    std::ptr::copy_nonoverlapping(self.bits, self.base.as_mut_ptr(), self.base.len());
+                }
+                self.moved = false;
             } else {
                 for i in 0..self.outputs.len() {
                     self.pull(i);
@@ -138,6 +170,11 @@ impl ScreenGrabber {
                 out.dup = None; // lost after a mode change or secure desktop; retried next frame
                 return;
             }
+        }
+        if out.rect.intersect(&region).is_none() {
+            // Nothing of this monitor is in the picture: don't copy it.
+            let _ = dup.ReleaseFrame();
+            return;
         }
         let tex: Option<ID3D11Texture2D> = res.and_then(|r| r.cast().ok());
         if let (Some(tex), true) = (tex, info.LastPresentTime != 0 || out.staging.is_none()) {
@@ -175,10 +212,44 @@ impl ScreenGrabber {
         let _ = dup.ReleaseFrame();
     }
 
+    /// Blends a filled disc (or a ring when `ring` is set) of `color` (B, G, R) into the picture.
+    unsafe fn blend_disc(&self, cx: i32, cy: i32, radius: f32, ring: bool, color: (u8, u8, u8), alpha: f32) {
+        let (w, h) = (self.region.w, self.region.h);
+        let r = radius.ceil() as i32 + 1;
+        for y in (cy - r).max(0)..(cy + r + 1).min(h) {
+            for x in (cx - r).max(0)..(cx + r + 1).min(w) {
+                let d = (((x - cx) * (x - cx) + (y - cy) * (y - cy)) as f32).sqrt();
+                // Edge coverage over one pixel, so the shapes are smooth.
+                let cover = if ring { (3.0 - (d - radius).abs()).clamp(0.0, 1.0) } else { (radius - d + 0.5).clamp(0.0, 1.0) };
+                if cover <= 0.0 {
+                    continue;
+                }
+                let a = alpha * cover;
+                let p = self.bits.add((y * w + x) as usize * 4);
+                for (k, c) in [color.0, color.1, color.2].into_iter().enumerate() {
+                    let old = *p.add(k) as f32;
+                    *p.add(k) = (old + (c as f32 - old) * a) as u8;
+                }
+            }
+        }
+    }
+
     unsafe fn draw_cursor(&self) {
+        if !self.cursor.show {
+            return;
+        }
         let mut ci = CURSORINFO { cbSize: std::mem::size_of::<CURSORINFO>() as u32, ..Default::default() };
         if GetCursorInfo(&mut ci).is_err() || ci.flags.0 & CURSOR_SHOWING.0 == 0 || ci.hCursor.is_invalid() {
             return;
+        }
+        if self.cursor.highlight {
+            let (cx, cy) = (ci.ptScreenPos.x - self.region.x, ci.ptScreenPos.y - self.region.y);
+            let _ = GdiFlush(); // the bits are written directly below
+            self.blend_disc(cx, cy, 24.0, false, (0, 220, 255), 0.30); // yellow halo
+            let down = GetAsyncKeyState(0x01) as u16 & 0x8000 != 0 || GetAsyncKeyState(0x02) as u16 & 0x8000 != 0;
+            if down {
+                self.blend_disc(cx, cy, 20.0, true, (61, 83, 229), 0.95); // coral ring
+            }
         }
         let icon: HICON = HICON(ci.hCursor.0);
         let mut ii = ICONINFO::default();

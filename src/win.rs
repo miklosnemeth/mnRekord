@@ -43,20 +43,41 @@ pub fn monitors() -> Vec<Rect> {
     list.into_iter().map(|(_, r)| r).collect()
 }
 
+/// A visible top-level window.
+#[derive(Clone, Debug)]
+pub struct WindowInfo {
+    pub hwnd: isize,
+    pub rect: Rect,
+    pub title: String,
+}
+
+/// The visible frame of a window (without the invisible resize border), if it still exists on screen.
+pub fn window_frame(hwnd: isize) -> Option<Rect> {
+    unsafe {
+        let h = HWND(hwnd as *mut _);
+        if !IsWindow(Some(h)).as_bool() || IsIconic(h).as_bool() {
+            return None;
+        }
+        let mut r = RECT::default();
+        DwmGetWindowAttribute(h, DWMWA_EXTENDED_FRAME_BOUNDS, &mut r as *mut _ as *mut _, 16).ok()?;
+        Some(rect_of(&r))
+    }
+}
+
 /// Visible top-level windows, front to back, for click-to-pick.
-pub fn visible_windows(skip: HWND) -> Vec<Rect> {
+pub fn visible_windows(skip: HWND) -> Vec<WindowInfo> {
     unsafe extern "system" fn cb(h: HWND, data: LPARAM) -> BOOL {
-        let (list, skip) = &mut *(data.0 as *mut (Vec<Rect>, HWND));
+        let (list, skip) = &mut *(data.0 as *mut (Vec<WindowInfo>, HWND));
         if h != *skip && IsWindowVisible(h).as_bool() && !IsIconic(h).as_bool() {
             let mut cloaked = 0u32;
             let _ = DwmGetWindowAttribute(h, DWMWA_CLOAKED, &mut cloaked as *mut _ as *mut _, 4);
             let ex = GetWindowLongW(h, GWL_EXSTYLE) as u32;
             if cloaked == 0 && ex & WS_EX_TOOLWINDOW.0 == 0 && GetWindowTextLengthW(h) > 0 {
-                let mut r = RECT::default();
-                if DwmGetWindowAttribute(h, DWMWA_EXTENDED_FRAME_BOUNDS, &mut r as *mut _ as *mut _, 16).is_ok() {
-                    let rect = rect_of(&r);
+                if let Some(rect) = window_frame(h.0 as isize) {
                     if rect.w > 40 && rect.h > 40 {
-                        list.push(rect);
+                        let mut buf = [0u16; 256];
+                        let n = GetWindowTextW(h, &mut buf).max(0) as usize;
+                        list.push(WindowInfo { hwnd: h.0 as isize, rect, title: String::from_utf16_lossy(&buf[..n]) });
                     }
                 }
             }

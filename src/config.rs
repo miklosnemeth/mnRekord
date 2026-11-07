@@ -129,11 +129,19 @@ pub struct Settings {
     pub show_countdown: bool,
     pub use_window_mask: bool,
     pub restore_cursor: bool,
+    /// Draw the mouse pointer into the recording.
+    pub show_cursor: bool,
+    /// Halo around the pointer and a ring on clicks.
+    pub highlight_cursor: bool,
     pub exit_on_stop: bool,
     pub open_on_stop: bool,
     pub show_region_indicator: bool,
     pub auto_minimize: bool,
     pub prompt_for_name: bool,
+    /// File name without extension; `{date}`, `{time}` and `{window}` are filled in.
+    pub name_template: String,
+    /// Keep the region in place relative to the window it was picked from.
+    pub follow_window: bool,
     pub output_folder: String,
     pub temp_folder: String,
     pub shortcut_record: Shortcut,
@@ -142,6 +150,10 @@ pub struct Settings {
     pub max_fps: u32,
     /// H.264 quality 1..100 for the encoder's quality-based rate control.
     pub video_quality: u32,
+    /// Start a new file after this many seconds of recording (0 = one file).
+    pub split_seconds: u32,
+    /// Use a hardware (GPU) video encoder when available.
+    pub hardware_encoder: bool,
     pub record_screen: bool,
     pub record_system: bool,
     pub region: Option<Rect>,
@@ -157,11 +169,15 @@ impl Default for Settings {
             show_countdown: true,
             use_window_mask: true,
             restore_cursor: true,
+            show_cursor: true,
+            highlight_cursor: true,
             exit_on_stop: true,
             open_on_stop: true,
             show_region_indicator: true,
             auto_minimize: false,
             prompt_for_name: false,
+            name_template: "Rec {date} {time}".into(),
+            follow_window: false,
             output_folder: default_output().to_string_lossy().into_owned(),
             temp_folder: std::env::temp_dir().to_string_lossy().into_owned(),
             shortcut_record: Shortcut::plain("F9"),
@@ -169,6 +185,8 @@ impl Default for Settings {
             shortcut_marker: Shortcut::ctrl("M"),
             max_fps: 30,
             video_quality: DEFAULT_QUALITY,
+            split_seconds: 0,
+            hardware_encoder: true,
             record_screen: true,
             record_system: true,
             region: None,
