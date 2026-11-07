@@ -36,6 +36,9 @@ The executable is `target/release/mnrekord.exe`.
 (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)). It installs per user by default, adds a
 Start menu entry (and optionally a desktop icon) and an uninstaller. English and Hungarian.
 
+The installer is not code-signed, so Windows SmartScreen may warn the first time: choose *More info*, then
+*Run anyway*. Each release lists SHA-256 checksums; compare with `Get-FileHash <file>`.
+
 ## Command line
 
 A running instance accepts commands from a second launch, for example
