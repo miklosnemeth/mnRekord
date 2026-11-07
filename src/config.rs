@@ -167,6 +167,8 @@ pub struct Settings {
     pub hardware_encoder: bool,
     pub record_screen: bool,
     pub record_system: bool,
+    /// Record only the sound of the window the region was picked from.
+    pub window_sound_only: bool,
     pub region: Option<Rect>,
     /// Locked width:height ratio of the region (None = free).
     pub aspect: Option<(i32, i32)>,
@@ -201,6 +203,7 @@ impl Default for Settings {
             hardware_encoder: true,
             record_screen: true,
             record_system: true,
+            window_sound_only: false,
             region: None,
             aspect: Some((16, 9)),
             delay_ms_after_mask: 200,

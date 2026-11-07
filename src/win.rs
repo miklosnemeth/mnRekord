@@ -49,6 +49,8 @@ pub struct WindowInfo {
     pub hwnd: isize,
     pub rect: Rect,
     pub title: String,
+    /// The process that owns the window.
+    pub pid: u32,
 }
 
 /// The visible frame of a window (without the invisible resize border), if it still exists on screen.
@@ -77,7 +79,9 @@ pub fn visible_windows(skip: HWND) -> Vec<WindowInfo> {
                     if rect.w > 40 && rect.h > 40 {
                         let mut buf = [0u16; 256];
                         let n = GetWindowTextW(h, &mut buf).max(0) as usize;
-                        list.push(WindowInfo { hwnd: h.0 as isize, rect, title: String::from_utf16_lossy(&buf[..n]) });
+                        let mut pid = 0u32;
+                        GetWindowThreadProcessId(h, Some(&mut pid));
+                        list.push(WindowInfo { hwnd: h.0 as isize, rect, title: String::from_utf16_lossy(&buf[..n]), pid });
                     }
                 }
             }

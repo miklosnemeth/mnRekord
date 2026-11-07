@@ -18,8 +18,8 @@ impl AudioSource {
     pub fn level(&self) -> f32 {
         f32::from_bits(self.level.load(Ordering::Relaxed))
     }
-    /// Captures the sound the computer plays.
-    pub fn start() -> Arc<AudioSource> {
+    /// Captures the sound the computer plays, or only the sound of the process `pid` and its children.
+    pub fn start(pid: Option<u32>) -> Arc<AudioSource> {
         let s = Arc::new(AudioSource {
             level: Default::default(),
             queue: Default::default(),
@@ -29,7 +29,7 @@ impl AudioSource {
         });
         let t = s.clone();
         std::thread::spawn(move || {
-            if let Err(e) = unsafe { run(&t) } {
+            if let Err(e) = unsafe { run(&t, pid) } {
                 *t.error.lock().unwrap() = Some(e.message().to_string());
             }
         });
@@ -51,10 +51,69 @@ pub fn has_playback_device() -> bool {
     unsafe { device_enum().and_then(|e| e.GetDefaultAudioEndpoint(eRender, eConsole)).is_ok() }
 }
 
-unsafe fn run(s: &AudioSource) -> windows::core::Result<()> {
-    let en = device_enum()?;
-    let device = en.GetDefaultAudioEndpoint(eRender, eConsole)?;
-    let client: IAudioClient = device.Activate(CLSCTX_ALL, None)?;
+/// Receives the result of `ActivateAudioInterfaceAsync`.
+#[windows::core::implement(IActivateAudioInterfaceCompletionHandler)]
+struct Done(std::sync::mpsc::Sender<()>);
+
+impl IActivateAudioInterfaceCompletionHandler_Impl for Done_Impl {
+    fn ActivateCompleted(&self, _op: windows::core::Ref<'_, IActivateAudioInterfaceAsyncOperation>) -> windows::core::Result<()> {
+        let _ = self.0.send(());
+        Ok(())
+    }
+}
+
+/// An audio client that hears only the process `pid` and its children (Windows 10 2004 or newer).
+unsafe fn process_client(pid: u32) -> windows::core::Result<IAudioClient> {
+    use windows::core::{Interface, HSTRING, PCWSTR};
+    use windows::Win32::System::Com::StructuredStorage::{PROPVARIANT, PROPVARIANT_0, PROPVARIANT_0_0, PROPVARIANT_0_0_0};
+    use windows::Win32::System::Variant::VT_BLOB;
+
+    let mut params = AUDIOCLIENT_ACTIVATION_PARAMS {
+        ActivationType: AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
+        Anonymous: AUDIOCLIENT_ACTIVATION_PARAMS_0 {
+            ProcessLoopbackParams: AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS {
+                TargetProcessId: pid,
+                ProcessLoopbackMode: PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE,
+            },
+        },
+    };
+    let blob = windows::Win32::System::Com::BLOB {
+        cbSize: std::mem::size_of::<AUDIOCLIENT_ACTIVATION_PARAMS>() as u32,
+        pBlobData: &mut params as *mut _ as *mut u8,
+    };
+    // The blob points into this stack frame: the PROPVARIANT must never try to free it.
+    let prop = std::mem::ManuallyDrop::new(PROPVARIANT {
+        Anonymous: PROPVARIANT_0 {
+            Anonymous: std::mem::ManuallyDrop::new(PROPVARIANT_0_0 {
+                vt: VT_BLOB,
+                wReserved1: 0,
+                wReserved2: 0,
+                wReserved3: 0,
+                Anonymous: PROPVARIANT_0_0_0 { blob },
+            }),
+        },
+    });
+    let (tx, rx) = std::sync::mpsc::channel();
+    let handler: IActivateAudioInterfaceCompletionHandler = Done(tx).into();
+    let path = HSTRING::from("VAD\\Process_Loopback");
+    let op = ActivateAudioInterfaceAsync(PCWSTR(path.as_ptr()), &IAudioClient::IID, Some(&*prop as *const PROPVARIANT), &handler)?;
+    rx.recv_timeout(std::time::Duration::from_secs(5)).map_err(|_| windows::core::Error::from(windows::Win32::Foundation::E_FAIL))?;
+    let mut hr = windows::core::HRESULT(0);
+    let mut unk: Option<windows::core::IUnknown> = None;
+    op.GetActivateResult(&mut hr, &mut unk)?;
+    hr.ok()?;
+    unk.ok_or_else(|| windows::core::Error::from(windows::Win32::Foundation::E_FAIL))?.cast()
+}
+
+unsafe fn run(s: &AudioSource, pid: Option<u32>) -> windows::core::Result<()> {
+    let client: IAudioClient = match pid {
+        Some(pid) => process_client(pid)?,
+        None => {
+            let en = device_enum()?;
+            let device = en.GetDefaultAudioEndpoint(eRender, eConsole)?;
+            device.Activate(CLSCTX_ALL, None)?
+        }
+    };
     let fmt = WAVEFORMATEX {
         wFormatTag: 3, // float
         nChannels: AUDIO_CHANNELS as u16,
@@ -65,7 +124,13 @@ unsafe fn run(s: &AudioSource) -> windows::core::Result<()> {
         cbSize: 0,
     };
     let flags = AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY | AUDCLNT_STREAMFLAGS_LOOPBACK;
+    // A process loopback client is only offered with event driven buffers.
+    let event = if pid.is_some() { Some(windows::Win32::System::Threading::CreateEventW(None, false, false, None)?) } else { None };
+    let flags = if event.is_some() { flags | AUDCLNT_STREAMFLAGS_EVENTCALLBACK } else { flags };
     client.Initialize(AUDCLNT_SHAREMODE_SHARED, flags, 10_000_000, 0, &fmt, None)?;
+    if let Some(e) = event {
+        client.SetEventHandle(e)?;
+    }
     let cap: IAudioCaptureClient = client.GetService()?;
     client.Start()?;
     let max_queue = (AUDIO_RATE * AUDIO_CHANNELS * 2) as usize; // two seconds
@@ -108,5 +173,8 @@ unsafe fn run(s: &AudioSource) -> windows::core::Result<()> {
         std::thread::sleep(std::time::Duration::from_millis(10));
     }
     let _ = client.Stop();
+    if let Some(e) = event {
+        let _ = windows::Win32::Foundation::CloseHandle(e);
+    }
     Ok(())
 }

@@ -283,6 +283,14 @@ impl App {
                 self.set_system_audio(on);
             }
             meter(ui, ui.available_width(), level);
+            if self.picked_window.is_some() {
+                ui.horizontal(|ui| {
+                    if toggle(ui, &mut self.settings.window_sound_only).on_hover_text(tr("Record only the sound of the window that was picked")).changed() {
+                        self.persist();
+                    }
+                    ui.label(RichText::new(tr("Only this window")).small().color(MUTED));
+                });
+            }
             if let Some(e) = self.system.as_ref().and_then(|s| s.error.lock().unwrap().clone()) {
                 ui.label(RichText::new(e).small().color(CORAL));
             }

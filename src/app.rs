@@ -100,6 +100,8 @@ pub struct App {
     pub hotkeys: Option<Hotkeys>,
     pub hot: Arc<HotState>,
     pub system: Option<Arc<AudioSource>>,
+    /// The process whose sound `system` captures (None = all sound).
+    pub system_pid: Option<u32>,
     pub preview: Option<Preview>,
     /// The window the region was picked from, if it was picked by a click on a window.
     pub picked_window: Option<win::WindowInfo>,
@@ -165,6 +167,7 @@ impl App {
             hotkeys: None,
             hot,
             system: None,
+            system_pid: None,
             preview: None,
             picked_window: None,
             tray: None,
@@ -275,12 +278,24 @@ impl App {
         if self.demo {
             return;
         }
-        if self.settings.record_system && self.system.is_none() {
-            self.system = Some(AudioSource::start());
-        } else if !self.settings.record_system {
+        // Only the sound of the picked window, when asked for; otherwise everything the computer plays.
+        let want = self.settings.window_sound_only.then(|| self.picked_window.as_ref().map(|w| w.pid)).flatten();
+        let failed = self.system.as_ref().is_some_and(|s| s.error.lock().unwrap().is_some());
+        if self.system.is_some() && (!self.settings.record_system || self.system_pid != want || (failed && want.is_some())) {
             if let Some(s) = self.system.take() {
                 s.stop();
             }
+            if failed && want.is_some() {
+                // The window's sound could not be captured: say so and fall back to all sound.
+                self.notice = Some(tr("The sound of this window can't be captured. Recording all system sound.").into());
+                self.settings.window_sound_only = false;
+                self.persist();
+            }
+        }
+        if self.settings.record_system && self.system.is_none() {
+            let pid = self.settings.window_sound_only.then(|| self.picked_window.as_ref().map(|w| w.pid)).flatten();
+            self.system_pid = pid;
+            self.system = Some(AudioSource::start(pid));
         }
     }
 
