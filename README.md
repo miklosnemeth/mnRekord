@@ -2,6 +2,8 @@
 
 A small Windows screen recorder written in Rust with [egui](https://github.com/emilk/egui).
 
+Documentation: [manual (PDF)](docs/mnRekord-manual.pdf), [magyar kézikönyv (PDF)](docs/mnRekord-kezikonyv.pdf), and a website in `docs/` (`docs/index.html`, English and Hungarian).
+
 ## Features
 
 - Record a screen region, a whole monitor or a window, chosen on a stage or drawn directly on the desktop

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mnRekord – egyszerű képernyőrögzítő Windowsra</title>
+<meta name="description" content="Az mnRekord egy területet, monitort vagy ablakot rögzít rendszerhanggal, és MP4-et ment. Képarány-zárolás, ablakkövetés, GIF-export. Ingyenes, MIT licenc.">
+<link rel="icon" href="../img/icon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="../img/icon.png" alt="">mnRekord</a>
+    <nav>
+      <a href="#features">Funkciók</a>
+      <a href="#how">Hogyan működik</a>
+      <a href="manual.html">Kézikönyv</a>
+      <a href="../mnRekord-kezikonyv.pdf">PDF</a>
+      <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a>
+      <a href="../index.html" title="English">EN</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero wrap">
+  <h1>Rögzítsd a képernyőd.<br><span>Zavaró semmi.</span></h1>
+  <p class="lead">Az mnRekord egy kicsi, sötét képernyőrögzítő Windowsra. Válassz egy területet, monitort vagy ablakot, nyomd meg az <kbd>F9</kbd>-et, és kapsz egy MP4-et a számítógéped hangjával.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/miklosnemeth/mnRekord/releases/latest">Letöltés Windowsra</a>
+    <a class="btn" href="manual.html">Kézikönyv</a>
+  </div>
+  <div class="shot"><img src="../img/main.png" alt="Az mnRekord ablaka: forrásokkal balra, a színpaddal és a felvételi kerettel jobbra"></div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <h2>Mit tud</h2>
+    <p class="sub">Ami egy oktatóvideóhoz, hibajelentéshez vagy gyors felvételhez kell, és nem sokkal több.</p>
+    <div class="grid">
+      <div class="card"><span class="tag">Rögzítés</span><h3>Terület, monitor vagy ablak</h3><p>Húzz keretet az asztalod élő előnézetén, kattints egy ablakra, vagy rajzolj téglalapot közvetlenül a képernyőre nagyítóval.</p></div>
+      <div class="card"><span class="tag">Rögzítés</span><h3>Képarány-zárolás</h3><p>16:9 vagy 9:16, kész méretekkel 360p-től 4K UHD-ig. A fogantyúk megtartják az arányt, és sosem akadnak el.</p></div>
+      <div class="card"><span class="tag">Rögzítés</span><h3>Ablak követése</h3><p>Mozgasd az ablakot felvétel közben, a kép vele marad.</p></div>
+      <div class="card"><span class="tag">Hang</span><h3>Rendszerhang</h3><p>Rögzíti, amit hallasz, AAC-ként, a képpel szinkronban, szintjelzővel.</p></div>
+      <div class="card"><span class="tag">Videó</span><h3>H.264 minőségcsúszkával</h3><p>Minőség 1-től 100-ig, 15–60 fps, GPU-s kódolás, ha van. Mindenhol lejátszható.</p></div>
+      <div class="card"><span class="tag">Videó</span><h3>Egérmutató kiemelése</h3><p>Lágy halo a mutató körül és gyűrű kattintáskor, hogy a nézők követni tudjanak.</p></div>
+      <div class="card"><span class="tag">Munkafolyamat</span><h3>Szünet, jelölők, részek</h3><p>Szüneteltetés és folytatás, jelölők egy szövegfájlba, hosszú felvételek részekre bontása.</p></div>
+      <div class="card"><span class="tag">Munkafolyamat</span><h3>GIF egy kattintással</h3><p>Az utolsó felvételből animált GIF.</p></div>
+      <div class="card"><span class="tag">Biztonság</span><h3>Összeomlás utáni helyreállítás</h3><p>A fájl töredékekben íródik. Összeomlás után az mnRekord felajánlja, hogy megtartja, ami fel lett véve.</p></div>
+      <div class="card"><span class="tag">Vezérlés</span><h3>Gyorsbillentyűk, tálca, parancssor</h3><p>Globális gyorsbillentyűk, menüs tálcaikon és szkriptelhető parancsok.</p></div>
+      <div class="card"><span class="tag">Méret</span><h3>Egyetlen kis fájl</h3><p>Egy kb. 7 MB-os exe, Rustban írva. Fiók, felhő és reklám nélkül.</p></div>
+      <div class="card"><span class="tag">Nyílt</span><h3>MIT licenc</h3><p>Szabadon használható és módosítható. A forrás a GitHubon van.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <h2>Hogyan működik</h2>
+    <p class="sub">A kezdéstől a kész videóig néhány kattintás.</p>
+    <div class="two">
+      <ol class="steps">
+        <li><b>Válaszd ki, mit rögzítsünk.</b> Húzd a keretet, kattints a <i>Screen 1</i>-re, vagy a <i>Draw on screen</i>-nel kattints egy ablakra.</li>
+        <li><b>Válassz méretet.</b> Állítsd be az arányt (16:9, 9:16 vagy szabad) és egy méretet, például <i>FHD</i>.</li>
+        <li><b>Rögzíts.</b> Nyomd meg az <kbd>F9</kbd>-et. 3-2-1 visszaszámlálás után egy vékony sáv váltja fel az ablakot.</li>
+        <li><b>Állítsd le.</b> Nyomd meg az <kbd>F10</kbd>-et. Az MP4 mentődik, és megnyílik a lejátszódban.</li>
+      </ol>
+      <div class="shot"><img src="../img/bar.png" alt="A felvételi sáv időmérővel, Pause, Stop, Marker és Restart gombbal"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <h2>Állítsd be a magad módján</h2>
+    <p class="sub">A képkockasebesség, a minőség, a fájlnevek, a gyorsbillentyűk és a mappák a beállításokban vannak.</p>
+    <div class="two">
+      <div class="shot"><img src="../img/prefs1.png" alt="Beállítások: képkockasebesség, minőség, részekre bontás, GPU-s kódolás"></div>
+      <div class="shot"><img src="../img/prefs3.png" alt="Beállítások: gyorsbillentyűk"></div>
+    </div>
+    <p class="sub" style="margin-top:18px">A program felülete angol; a kézikönyv magyarul van.</p>
+  </div>
+</section>
+
+<section class="block" id="download">
+  <div class="wrap">
+    <h2>Szerezd meg</h2>
+    <p class="sub">Windows 10 vagy 11, 64 bit. Töltsd le a telepítőt vagy az önálló exét a legújabb kiadásból.</p>
+    <div class="cta" style="display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn primary" href="https://github.com/miklosnemeth/mnRekord/releases/latest">Legújabb kiadás</a>
+      <a class="btn" href="../mnRekord-kezikonyv.pdf">Kézikönyv (PDF)</a>
+      <a class="btn" href="https://github.com/miklosnemeth/mnRekord">Forráskód</a>
+    </div>
+    <p class="sub" style="margin-top:22px">Építsd meg magad:</p>
+    <pre><code>git clone https://github.com/miklosnemeth/mnRekord
+cd mnRekord
+cargo build --release</code></pre>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>mnRekord 0.2.0 · MIT licenc · © 2026 Miklós Németh</span>
+    <span><a href="manual.html">Kézikönyv</a> · <a href="../mnRekord-kezikonyv.pdf">PDF</a> · <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mnRekord kézikönyv</title>
+<meta name="description" content="Felhasználói kézikönyv az mnRekordhoz, egy Windowsos képernyőrögzítőhöz.">
+<link rel="icon" href="../img/icon.png">
+<link rel="stylesheet" href="../style.css">
+<style>
+  .contents { display: none; }
+  @media print {
+    .contents { display: block; }
+    .contents h2 { border: 0; margin-top: 0; counter-increment: none; }
+    .contents h2::before { content: none; }
+    .contents ol { list-style: none; padding: 0; counter-reset: c; columns: 1; }
+    .contents li { counter-increment: c; padding: 3pt 0; border-bottom: 1px dotted #c9ccd3; font-size: 11pt; }
+    .contents li::before { content: counter(c) ".  "; color: #c93d28; font-weight: 600; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top no-print">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="../img/icon.png" alt="">mnRekord</a>
+    <nav>
+      <a href="index.html">Főoldal</a>
+      <a class="on" href="manual.html">Kézikönyv</a>
+      <a href="../mnRekord-kezikonyv.pdf">PDF</a>
+      <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a>
+      <a href="../manual.html" title="English">EN</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Borítólap: csak nyomtatásban -->
+<div class="cover">
+  <img class="icon" src="../img/icon.png" alt="">
+  <h1>mn<span>Rekord</span></h1>
+  <p>Felhasználói kézikönyv</p>
+  <img class="shot" src="../img/main.png" alt="">
+  <div class="meta">0.2.0 verzió &nbsp;·&nbsp; Windows 10 és 11</div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+<aside class="toc no-print">
+  <ol>
+    <li><a href="#intro">Bevezetés</a></li>
+    <li><a href="#install">Telepítés</a></li>
+    <li><a href="#quick">Gyors kezdés</a></li>
+    <li><a href="#window">A főablak</a></li>
+    <li><a href="#region">Mit rögzítsünk?</a></li>
+    <li><a href="#recording">Felvétel</a></li>
+    <li><a href="#files">Felvételek és fájlok</a></li>
+    <li><a href="#prefs">Beállítások</a></li>
+    <li><a href="#shortcuts">Gyorsbillentyűk</a></li>
+    <li><a href="#tray">Tálcaikon</a></li>
+    <li><a href="#cli">Parancssor</a></li>
+    <li><a href="#recovery">Felvétel helyreállítása</a></li>
+    <li><a href="#trouble">Hibaelhárítás</a></li>
+    <li><a href="#tech">Műszaki jegyzetek</a></li>
+    <li><a href="#build">Építés forrásból</a></li>
+  </ol>
+</aside>
+
+<main class="manual">
+
+<section class="contents">
+  <h2>Tartalom</h2>
+  <ol>
+    <li>Bevezetés</li>
+    <li>Telepítés</li>
+    <li>Gyors kezdés</li>
+    <li>A főablak</li>
+    <li>Mit rögzítsünk?</li>
+    <li>Felvétel</li>
+    <li>Felvételek és fájlok</li>
+    <li>Beállítások</li>
+    <li>Gyorsbillentyűk</li>
+    <li>Tálcaikon</li>
+    <li>Parancssor</li>
+    <li>Felvétel helyreállítása</li>
+    <li>Hibaelhárítás</li>
+    <li>Műszaki jegyzetek</li>
+    <li>Építés forrásból</li>
+  </ol>
+</section>
+
+<h1 class="no-print">mnRekord kézikönyv</h1>
+<p class="byline no-print">0.2.0 verzió · Windows 10 és 11</p>
+
+<div class="note"><b>A program felülete angol</b>A program gombjai és feliratai angolul jelennek meg, ezért a kézikönyv is az eredeti angol nevükön hivatkozik rájuk (például <b>Record</b>, <b>Stop</b>, <b>Draw on screen</b>). A képernyőképek is az angol felületet mutatják.</div>
+
+<h2 id="intro">Bevezetés</h2>
+<p>Az mnRekord egy kis Windowsos képernyőrögzítő. Rögzíti a képernyő egy részét, egy teljes monitort vagy egyetlen ablakot, a számítógép hangjával együtt, és az eredményt MP4 videóként menti. Az ablak sötét és egyszerű, és mindent tartalmaz, ami néhány kattintással elindított felvételhez kell.</p>
+<p>Mit tud:</p>
+<ul>
+  <li>rögzít egy területet, egy monitort vagy egy ablakot; a területet a képernyő előnézetén jelölheted ki, vagy közvetlenül az asztalon rajzolhatod meg;</li>
+  <li>méretezés közben megtartja a <b>16:9</b> vagy <b>9:16</b> képarányt, kész méretekkel (360p, HD, FHD, QHD, 4K UHD);</li>
+  <li>felvétel közben <b>követi az ablakot</b>, így a kép az ablakon marad, ha elmozdítod;</li>
+  <li>rögzíti a rendszerhangot (mindent, amit hallasz) AAC-ként;</li>
+  <li>kirajzolja az egérmutatót, opcionális halóval és kattintásgyűrűvel;</li>
+  <li>szüneteltet, folytat, jelölőket tesz a felvételbe; a hosszú felvételeket részekre bontja; az utolsó felvételből GIF-et készít;</li>
+  <li>vezérelhető globális gyorsbillentyűkkel, tálcaikonnal és parancssorból;</li>
+  <li>összeomlás után felajánlja a megszakadt felvétel mentését.</li>
+</ul>
+<p>Az mnRekord nem rögzít mikrofont és webkamerát.</p>
+
+<h2 id="install">Telepítés</h2>
+<h3>Követelmények</h3>
+<ul>
+  <li>Windows 10 vagy Windows 11, 64 bites.</li>
+  <li>Lejátszóeszköz, ha rendszerhangot is akarsz rögzíteni.</li>
+  <li>A Windows H.264 és AAC kódolói. Ezek a Windows részei; az „N” kiadásokon előbb telepítsd a Microsoft <i>Media Feature Pack</i> csomagját.</li>
+</ul>
+<h3>Telepítővel</h3>
+<p>Futtasd a <code>mnRekord-0.2.0-setup.exe</code> fájlt. Alapból csak a felhasználódnak telepít, és nem kér rendszergazdai jogot; a párbeszédablak felajánlja a minden felhasználóra telepítést is. Létrehoz egy Start menü bejegyzést, kérésre asztali ikont, és egy eltávolítót (<i>Beállítások → Alkalmazások</i>). A telepítő magyarul és angolul is elérhető.</p>
+<h3>Telepítés nélkül</h3>
+<p>Az <code>mnrekord.exe</code> egyetlen fájl. Másold bárhová, és indítsd el; semmi másra nincs szükség.</p>
+<h3>Eltávolítás</h3>
+<p>Az mnRekordot a <i>Beállítások → Alkalmazások</i> alatt távolíthatod el. A beállításaid (<code>%APPDATA%\mnRekord</code>) és a felvételeid megmaradnak.</p>
+
+<h2 id="quick">Gyors kezdés</h2>
+<ol>
+  <li>Indítsd el az mnRekordot. A jobb oldali színpad (<i>Stage</i>) az asztalodat és egy keretet mutat; a keret az, amit rögzíteni fog.</li>
+  <li>Húzd a keretet vagy a fogantyúit arra a területre, amit rögzíteni akarsz. Vagy kattints a <b>Screen 1</b> gombra egy teljes monitorhoz, vagy a <b>Draw on screen</b> gombra egy ablak kiválasztásához.</li>
+  <li>Válassz méretet a <b>Ratio</b> és a <b>Size</b> listával, például <i>16:9</i> és <i>FHD</i>.</li>
+  <li>Nyomd meg a <b>Record</b> gombot (vagy az <kbd>F9</kbd>-et). 3-2-1 visszaszámlálás indul, az ablak pedig vékony sávvá alakul.</li>
+  <li>Nyomd meg a <b>Stop</b> gombot (vagy az <kbd>F10</kbd>-et). A videó a <code>Dokumentumok\mnRekord</code> mappába kerül, és megnyílik a lejátszódban.</li>
+</ol>
+
+<h2 id="window">A főablak</h2>
+<figure>
+  <div class="shot"><img src="../img/main.png" alt="Az mnRekord főablaka"></div>
+  <figcaption>A főablak. A színpadon látható kép egy demókép.</figcaption>
+</figure>
+<table>
+  <tr><th>Rész</th><th>Mit csinál</th></tr>
+  <tr><td><b>Állapot</b> (fent, a név mellett)</td><td>„Ready to record”, ha elindítható a felvétel.</td></tr>
+  <tr><td><b>Fogaskerék</b> (jobb felül)</td><td>Megnyitja a <a href="#prefs">Beállításokat</a> (<i>Preferences</i>).</td></tr>
+  <tr><td><b>Screen</b> kártya</td><td>Kapcsoló a képernyő rögzítéséhez. Mutatja a videó méretét és képkockasebességét, például <i>1920 x 1080 at 30 fps</i>.</td></tr>
+  <tr><td><b>System audio</b> kártya</td><td>Kapcsoló a számítógép hangjának rögzítéséhez, szintjelzővel, ami mozog, amíg valami szól.</td></tr>
+  <tr><td><b>Region</b> kártya</td><td>Monitorok, <b>Draw on screen</b>, szélesség és magasság, <b>Ratio</b>, <b>Size</b> és <b>Follow</b>. Lásd: <a href="#region">Mit rögzítsünk?</a></td></tr>
+  <tr><td><b>Record</b> gomb</td><td>Elindítja a felvételt. Mutatja a gyorsbillentyűt (<kbd>F9</kbd>). Szürke, ha semmi nincs bekapcsolva rögzítésre.</td></tr>
+  <tr><td><b>Last recording</b> és <b>Make GIF</b></td><td>Felvétel után jelennek meg a Record gomb alatt, ha az „Exit after stopped” ki van kapcsolva (különben a program már kilépett). Lásd: <a href="#files">Felvételek és fájlok</a>.</td></tr>
+  <tr><td><b>Stage</b> (színpad)</td><td>Az összes monitorod élő képe, benne a keret, amit rögzíteni fogsz.</td></tr>
+</table>
+<div class="note"><b>Megjegyzés</b>A színpad másodpercenként kb. 30-szor frissül, és leáll, amíg az ablak le van kicsinyítve. A rögzítő saját ablaka el van rejtve a képről.</div>
+
+<h2 id="region">Mit rögzítsünk?</h2>
+<h3>A keret a színpadon</h3>
+<ul>
+  <li><b>Mozgatás:</b> húzd a keret belsejét.</li>
+  <li><b>Átméretezés:</b> húzd valamelyik a nyolc fogantyút (négy sarok, négy oldal közepe).</li>
+  <li>Zárolt képaránynál a <b>sarok</b> a szemközti sarokból nő, és az egér bármilyen irányú mozgását követi. Az <b>oldalfogantyú</b> a keret közepe körül nő, és ha a keret kilépne a képernyőről, visszatolódik, így a fogantyú sosem akad el.</li>
+  <li><b>Free</b> képaránynál az oldalak és a sarkok megkötés nélkül méretezik a keretet.</li>
+</ul>
+<h3>Monitorok</h3>
+<p>A <b>Screen 1</b>, <b>Screen 2</b> … gombok egy teljes monitort jelölnek ki. Zárolt képaránynál az adott arányú legnagyobb keret fér be a monitorba, középre igazítva.</p>
+<h3>Draw on screen</h3>
+<p>Az ablak eltűnik, és az asztalod állóképe borítja a képernyőt. Ezután:</p>
+<ul>
+  <li><b>kattints</b> egy ablakra vagy monitorra a rögzítéséhez (az ablakot az épp aktuális helyén, látható keretével rögzíti);</li>
+  <li>vagy <b>húzz</b> egy téglalapot; az egérmutató melletti nagyító segít a pontos pixel eltalálásában;</li>
+  <li>az <kbd>Esc</kbd> megszakítja.</li>
+</ul>
+<p>Ha ablakot választasz, megjelenik a <b>Follow</b> kapcsoló (lásd lejjebb).</p>
+<h3>Ratio és Size</h3>
+<p>A <b>Ratio</b> lista az alapbeállítás: <i>16:9</i>, <i>9:16</i> vagy <i>Free</i>. 16:9 vagy 9:16 esetén a keret mindig megtartja az arányt, bármit csinálsz vele, a <b>Size</b> lista pedig az adott arányú méreteket kínálja:</p>
+<table>
+  <tr><th>Név</th><th>16:9</th><th>9:16</th></tr>
+  <tr><td>360p</td><td>640 × 360</td><td>360 × 640</td></tr>
+  <tr><td>HD</td><td>1280 × 720</td><td>720 × 1280</td></tr>
+  <tr><td>FHD</td><td>1920 × 1080</td><td>1080 × 1920</td></tr>
+  <tr><td>QHD</td><td>2560 × 1440</td><td>1440 × 2560</td></tr>
+  <tr><td>4K UHD</td><td>3840 × 2160</td><td>2160 × 3840</td></tr>
+</table>
+<p>A képernyődnél nagyobb méretek szürkék. Méret választásakor a keret közepe a helyén marad. <b>Free</b> esetén a lista az AD (600 × 315), SD, HD, FHD, 2K, QHD és 4K UHD méreteket kínálja.</p>
+<p>A <b>Width</b> és a <b>Height</b> számmezők húzhatók vagy beírhatók. Zárolt képaránynál az egyik módosítása a másikat is változtatja. A videó szélessége és magassága mindig páros pixelszám, mert a H.264 ezt kéri.</p>
+<h3>Ablak követése</h3>
+<p>Ha a területet egy ablakra kattintva választottad ki, a <b>Size</b> alatt megjelenik a <b>Follow</b> kapcsoló. Ha be van kapcsolva, a keret felvétel közben megtartja a helyét <i>az ablakon belül</i>: ha elmozdítod az ablakot, a kép vele megy. A keret mérete nem változik. A lekicsinyített vagy bezárt ablakot nem követi; a keret ott marad, ahol utoljára látta.</p>
+<p>Ugyanez parancssorból is megoldható, lásd a <a href="#cli"><code>followwindow</code></a> parancsot. Monitor kijelölése vagy téglalap rajzolása kikapcsolja a követést.</p>
+
+<h2 id="recording">Felvétel</h2>
+<figure>
+  <div class="shot"><img src="../img/bar.png" alt="A felvételi sáv"></div>
+  <figcaption>A felvételi sáv: időmérő, Pause, Stop, Marker, Restart, szintjelző és bezáró gomb.</figcaption>
+</figure>
+<h3>Indítás</h3>
+<p>Nyomd meg a <b>Record</b> gombot vagy az <kbd>F9</kbd>-et. Rövid késleltetés után a 3, 2, 1 számok jelennek meg a rögzített területen (a visszaszámlálás kikapcsolható). Az ablak vékony sávvá húzódik össze, amit bárhová elhúzhatsz. Alapból ki van zárva a felvételből, így sosem jelenik meg a videón. Ha a „Show region indicator” be van kapcsolva, egy vékony keret jelöli az asztalon a rögzített területet (ez sem kerül a felvételre).</p>
+<h3>A sáv</h3>
+<table>
+  <tr><th>Vezérlő</th><th>Mit csinál</th></tr>
+  <tr><td>Időmérő</td><td>A felvett idő. A pont villog felvétel közben, szüneteltetéskor borostyánsárga.</td></tr>
+  <tr><td><b>Pause</b> / <b>Resume</b></td><td>Szüneteltet és folytat. A szünet ideje nincs benne a videóban. (Gyorsbillentyű: <kbd>F9</kbd>.)</td></tr>
+  <tr><td><b>Stop</b></td><td>Befejezi és elmenti a felvételt. (Gyorsbillentyű: <kbd>F10</kbd>.)</td></tr>
+  <tr><td><b>Marker</b></td><td>Feljegyzi az aktuális időt egy szövegfájlba a videó mellett. (Gyorsbillentyű: <kbd>Ctrl</kbd>+<kbd>M</kbd>.)</td></tr>
+  <tr><td><b>Restart</b></td><td>Megkérdezi, törölje-e az eddigi felvételt; ha igent mondasz, visszakerülsz a főablakba, hogy újrakezdd.</td></tr>
+  <tr><td>Szintjelző</td><td>A rendszerhang szintje.</td></tr>
+  <tr><td><b>✕</b></td><td>Megkérdezi, törölje-e a felvételt és kilépjen-e.</td></tr>
+</table>
+<p>Az ablak címe is mutatja az állapotot, így a tálcáról is látszik, ha a sáv el van rejtve: <code>● 00:01:24  mnRekord</code> felvétel közben, <code>Paused 00:01:24  mnRekord</code> szüneteltetéskor.</p>
+<h3>Szünet és az egér</h3>
+<p>Ha a „Restore cursor location after pause” be van kapcsolva (alapból igen), az egérmutató folytatáskor visszaugrik arra a helyre, ahol szüneteltetéskor állt.</p>
+<h3>Leállítás és mentés</h3>
+<p>A <b>Stop</b> után a felvétel a kimeneti mappába kerül, a <a href="#files">fájlnévsablon</a> szerinti névvel. Ha a „Prompt for file name” van kiválasztva, egy mentési ablak kérdezi a nevet. Az alapbeállításokkal a felvétel ezután megnyílik a videólejátszódban, és az mnRekord kilép („Exit after stopped”, „Open recording after stopped”).</p>
+<p>Ha a visszaszámlálás alatt állítod le, semmi nem mentődik.</p>
+<h3>Kevés lemezhely</h3>
+<p>Ha az ideiglenes mappa meghajtóján kb. 300 MB-nál kevesebb a szabad hely, a felvétel magától leáll, és az addig felvett rész mentésre kerül.</p>
+
+<h2 id="files">Felvételek és fájlok</h2>
+<h3>A videó</h3>
+<p>MP4, H.264 videóval (Main profil) és 48 kHz-es sztereó AAC hanggal. A fájl töredékekben íródik, ezért még a váratlanul megszakadt felvétel is lejátszható az utolsó töredékig.</p>
+<h3>Fájlnevek</h3>
+<p>A név egy sablonból jön (Preferences → Files). Az alapértelmezett <code>Rec {date} {time}</code>, ami ilyet ad: <code>Rec 2026-11-07 14-05-09.mp4</code>.</p>
+<table>
+  <tr><th>Helyettesítő</th><th>Ezzel cserélődik</th></tr>
+  <tr><td><code>{date}</code></td><td>A dátum, <code>2026-11-07</code></td></tr>
+  <tr><td><code>{time}</code></td><td>Az idő, <code>14-05-09</code></td></tr>
+  <tr><td><code>{window}</code></td><td>Az ablak címe, amit a képernyőn kijelöltél, vagy <code>screen</code></td></tr>
+</table>
+<p>A fájlnévben nem engedélyezett karakterek <code>_</code>-ra cserélődnek. Ha már van ilyen nevű fájl, <code>(1)</code>, <code>(2)</code> … kerül a végére.</p>
+<h3>Jelölők</h3>
+<p>Ha tettél jelölőket (Marker), a videó mellé egy <code>név.markers.txt</code> szövegfájl kerül, jelölőnként egy sorral: az idő és a jelölő sorszáma, tabulátorral elválasztva, például <code>00:01:12.500&nbsp;&nbsp;Marker 1</code>. Jelölők csak akkor kerülnek rögzítésre, ha a képernyő is rögzítve van.</p>
+<h3>Részekre bontott felvételek</h3>
+<p>A <b>Start a new file every N min</b> beállítással (Preferences → Inputs) a hosszú felvétel részekre bomlik. Ha egy rész betelt, azonnal új fájl indul, a kész rész pedig lezárul. A fájlok neve <code>név-part1.mp4</code>, <code>név-part2.mp4</code> … és mindegyik önmagában lejátszható. A szünet ideje nem számít bele. Összeomlás esetén csak az éppen írt rész van veszélyben.</p>
+<h3>GIF</h3>
+<p>Ha az „Exit after stopped” ki van kapcsolva, az mnRekord felvétel után nyitva marad, és a Record gomb alatt megjeleníti a <b>Make GIF</b> gombot. Az utolsó felvételből animált GIF-et készít mellé. A GIF legfeljebb 640 pixel széles, másodpercenként 12 képkockás, és az első 30 másodpercet használja. A GIF-ek nagy fájlok; egy 30 másodperces kép is meghaladhatja a 10 MB-ot. Az elkészítés néhány másodpercig tart, és ha kész, megnyílik a mappa. Részekre bontott felvételnél a GIF az első részből készül.</p>
+
+<h2 id="prefs">Beállítások</h2>
+<p>A fogaskerékkel nyílnak meg. A legtöbb változás azonnal érvénybe lép; mindent elment, amikor bezárod a beállításokat.</p>
+<h3>General</h3>
+<figure>
+  <div class="shot"><img src="../img/prefs0.png" alt="Beállítások, General"></div>
+</figure>
+<table>
+  <tr><th>Beállítás</th><th>Jelentése</th></tr>
+  <tr><td>Show recorder countdown</td><td>A 3-2-1 a felvétel indulása előtt.</td></tr>
+  <tr><td>Do not capture recorder on screen</td><td>Elrejti az mnRekord saját ablakait (sáv, visszaszámlálás, területkeret) a videóról.</td></tr>
+  <tr><td>Restore cursor location after pause</td><td>Folytatáskor visszaviszi az egeret oda, ahol szüneteltetéskor volt.</td></tr>
+  <tr><td>Show the mouse pointer in the recording</td><td>Kirajzolja az egérmutatót a videóba.</td></tr>
+  <tr><td>Highlight the pointer and clicks</td><td>Lágy sárga halót rajzol a mutató köré, és piros gyűrűt, amíg egérgomb van lenyomva.</td></tr>
+  <tr><td>Exit after stopped</td><td>Kilép az mnRekord, amikor a felvétel mentve lett.</td></tr>
+  <tr><td>Open recording after stopped</td><td>Megnyitja a mentett fájlt az alapértelmezett lejátszóban.</td></tr>
+  <tr><td>Show region indicator</td><td>Vékony keret az asztalon a terület körül, amíg az nem a teljes monitor.</td></tr>
+  <tr><td>Automatically minimize recording window</td><td>Elrejti a sávot a felvétel indulásakor (használd a gyorsbillentyűket vagy a tálcaikont).</td></tr>
+</table>
+<h3>Inputs</h3>
+<figure>
+  <div class="shot"><img src="../img/prefs1.png" alt="Beállítások, Inputs"></div>
+</figure>
+<table>
+  <tr><th>Beállítás</th><th>Jelentése</th></tr>
+  <tr><td>Maximum frame rate</td><td>15, 24, 30 vagy 60 képkocka másodpercenként.</td></tr>
+  <tr><td>Quality</td><td>1-től 100-ig, alapból 75. Magasabb értéknél élesebb a kép és nagyobb a fájl. Egy mozgó színsávos tesztfelvételnél a 20-as minőség kb. 1 MB-ot, a 90-es kb. 8 MB-ot adott ugyanarra a tíz másodpercre.</td></tr>
+  <tr><td>Start a new file every</td><td>Hány perc után induljon új rész; 0 egyetlen fájlt jelent. Lásd: <a href="#files">Részekre bontott felvételek</a>.</td></tr>
+  <tr><td>Use the graphics card to encode</td><td>Engedi, hogy a Windows a videókártya H.264 kódolóját használja, ha van. Felvétel után itt látszik a használt kódoló neve. Kapcsold ki, ha videókártya-illesztő miatt gond van.</td></tr>
+</table>
+<h3>Files</h3>
+<figure>
+  <div class="shot"><img src="../img/prefs2.png" alt="Beállítások, Files"></div>
+</figure>
+<table>
+  <tr><th>Beállítás</th><th>Jelentése</th></tr>
+  <tr><td>Automatic file name / Prompt for file name</td><td>Mentés a sablon szerinti névvel, vagy kérdezzen a mentési ablakban.</td></tr>
+  <tr><td>File name template</td><td>A <code>{date}</code>, <code>{time}</code>, <code>{window}</code> helyettesítőkkel.</td></tr>
+  <tr><td>Default output folder</td><td>Ide kerülnek a felvételek. Alapból <code>Dokumentumok\mnRekord</code>.</td></tr>
+  <tr><td>Temporary storage folder</td><td>Ide íródik a felvétel, amíg fut. Gyors, elég nagy meghajtó a legjobb. Alapból a Windows ideiglenes mappája.</td></tr>
+</table>
+<h3>Shortcuts</h3>
+<figure>
+  <div class="shot"><img src="../img/prefs3.png" alt="Beállítások, Shortcuts"></div>
+</figure>
+<p>Lásd a következő fejezetet.</p>
+
+<h2 id="shortcuts">Gyorsbillentyűk</h2>
+<p>A gyorsbillentyűk a Windowsban mindenhol működnek, akkor is, ha az mnRekord a háttérben van.</p>
+<table>
+  <tr><th>Művelet</th><th>Alapérték</th></tr>
+  <tr><td>Record, pause and resume (indítás, szünet, folytatás)</td><td><kbd>F9</kbd></td></tr>
+  <tr><td>Stop (leállítás)</td><td><kbd>F10</kbd></td></tr>
+  <tr><td>Add marker (jelölő)</td><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td></tr>
+</table>
+<p>Módosításhoz nyisd meg a Preferences → Shortcuts fület, kattints a gyorsbillentyűre, és nyomd le az új billentyűt vagy kombinációt (funkcióbillentyű, betű vagy számjegy, igény szerint <kbd>Ctrl</kbd>, <kbd>Alt</kbd> vagy <kbd>Shift</kbd> mellett). A <b>Restore defaults</b> visszaállítja a fenti hármat. Ha egy gyorsbillentyűt már egy másik program használ, az mnRekord jelzi, hogy nem tudta kiosztani.</p>
+
+<h2 id="tray">Tálcaikon</h2>
+<p>Amíg az mnRekord fut, egy korallszínű ikon látszik a tálca értesítési területén (lehet, hogy a „rejtett ikonok” között). A bal kattintás előhozza az ablakot. A jobb kattintásos menü:</p>
+<ul>
+  <li><b>Show mnRekord</b> – előre hozza az ablakot;</li>
+  <li><b>Start recording</b> / <b>Stop recording</b> – a menüpont az állapottal együtt változik;</li>
+  <li><b>Quit</b> – kilépés.</li>
+</ul>
+
+<h2 id="cli">Parancssor</h2>
+<p>Az <code>mnrekord.exe</code> második indítása nem nyit második ablakot: átadja a paramétereit a futó példánynak, és kilép. Ha nem fut példány, a paramétereket az éppen induló példány hajtja végre. A parancsok elé írhatsz <code>/</code>, <code>-</code> vagy <code>--</code> jelet, vagy semmit; kis- és nagybetűre nem érzékenyek, és egyszerre több is megadható.</p>
+<pre><code>mnrekord setoutputpath "D:\Videók" setscreenframerate 60 record
+mnrekord stop</code></pre>
+<table>
+  <tr><th>Parancs</th><th>Hatása</th></tr>
+  <tr><td><code>record</code></td><td>Elindít egy felvételt (visszaszámlálással).</td></tr>
+  <tr><td><code>pause</code>, <code>resume</code></td><td>Szünetelteti vagy folytatja a futó felvételt.</td></tr>
+  <tr><td><code>stop</code></td><td>Leállít és ment, mint a Stop gomb.</td></tr>
+  <tr><td><code>writetofile</code></td><td>Leállít, kérdés nélkül automatikus névvel ment, és kilép.</td></tr>
+  <tr><td><code>drawregion</code></td><td>Elindítja a „Draw on screen” funkciót.</td></tr>
+  <tr><td><code>setregion X Y W H</code></td><td>Megadja a területet képernyőpixelekben.</td></tr>
+  <tr><td><code>followwindow "szöveg"</code></td><td>Kijelöli az első látható ablakot, amelynek címében szerepel a szöveg, rögzíti és követi.</td></tr>
+  <tr><td><code>setscreenframerate N</code></td><td>15, 24, 30 vagy 60.</td></tr>
+  <tr><td><code>setoutputpath "mappa"</code></td><td>Beállítja a kimeneti mappát.</td></tr>
+  <tr><td><code>enablescreenrecording</code>, <code>disablescreenrecording</code></td><td>Be- vagy kikapcsolja a Screen kártyát.</td></tr>
+  <tr><td><code>unmutesystemaudio</code>, <code>mutesystemaudio</code></td><td>Be- vagy kikapcsolja a System audio kártyát.</td></tr>
+</table>
+<p>Egy további mód nem a futó példányt használja:</p>
+<pre><code>mnrekord --gif felvetel.mp4 felvetel.gif</code></pre>
+<p>Egy felvételből GIF-et készít, majd kilép. Az eredmény egy <code>felvetel.gif.log</code> szövegfájl, amiben vagy <code>ok</code> áll, vagy a hiba oka.</p>
+<div class="note"><b>Megjegyzés</b>A <code>setoutputpath</code>, <code>setregion</code>, <code>setscreenframerate</code> és a többi beállítóparancs mentődik a beállításokba, mint az ablakban végzett módosítások.</div>
+
+<h2 id="recovery">Felvétel helyreállítása</h2>
+<p>A felvétel futás közben az ideiglenes mappába íródik. Ha az mnRekord szokatlan módon áll le (összeomlás, áramkimaradás, leállított folyamat), a következő indításkor megjelenik a <b>Recover recording</b> kérdés:</p>
+<ul>
+  <li>a <b>Recover</b> megkérdezi, hova mentse a fájlt, és megtartja, ami fel lett véve, az utolsó kiírt töredékig (a vége előtti néhány másodperc elveszhet);</li>
+  <li>a <b>Delete</b> eldobja.</li>
+</ul>
+<p>Amíg nem döntesz, a befejezetlen felvétel az ideiglenes mappában marad, egy <code>trecRec…</code> nevű mappában.</p>
+
+<h2 id="trouble">Hibaelhárítás</h2>
+<table>
+  <tr><th>Probléma</th><th>Mit próbálj</th></tr>
+  <tr><td>A Record gomb szürke, vagy „Turn on the screen to record”</td><td>Kapcsold be a <b>Screen</b> kártyát. Az mnRekord a képernyőt igényli; csak hangot nem rögzít.</td></tr>
+  <tr><td>„Unable to record system audio”</td><td>Csatlakoztass vagy engedélyezz egy lejátszóeszközt a Windows hangbeállításaiban, majd kapcsold be újra a System audiót.</td></tr>
+  <tr><td>Egy ablak fekete a videón</td><td>Egyes programok (védett videó, néhány teljes képernyős játék) nem engedik a képernyőrögzítést. Futtasd a játékot ablakos vagy keret nélküli módban.</td></tr>
+  <tr><td>A Windows bejelentkező vagy jogosultságkérő (UAC) képernyője nem látszik</td><td>A Windows így működik; ez védett asztal.</td></tr>
+  <tr><td>„Not Enough Space On Disk”</td><td>Szabadíts fel helyet, vagy válassz másik ideiglenes mappát (Preferences → Files). Az addigi felvétel mentve van.</td></tr>
+  <tr><td>A videó akadozik egy lassú gépen</td><td>Csökkentsd a képkockasebességet vagy a méretet, és hagyd bekapcsolva a „Use the graphics card to encode” beállítást. A GPU-t használó programok bezárása segít.</td></tr>
+  <tr><td>Egy gyorsbillentyű nem csinál semmit</td><td>Lehet, hogy egy másik program használja. Válassz másik billentyűt a Preferences → Shortcuts alatt.</td></tr>
+  <tr><td>Maga a rögzítő is megjelenik a videón</td><td>Ellenőrizd, hogy a „Do not capture recorder on screen” be van-e kapcsolva.</td></tr>
+  <tr><td>A méret olyanra változott, amit nem választottam</td><td>Zárolt képaránynál a keret mindig megtartja az arányt. Válaszd a <b>Free</b> értéket a Ratio listában, ha ez nélkül akarsz méretezni.</td></tr>
+</table>
+
+<h2 id="tech">Műszaki jegyzetek</h2>
+<ul>
+  <li><b>Rögzítés:</b> a Windows Desktop Duplication API-ja (DXGI), minden monitorra egy duplikáció, amit a terület érint; tartaléknak a GDI szolgál. A területet a beállított képkockasebességgel másolja; az egérmutatót rá rajzolja. Minden koordináta fizikai pixelben van megadva.</li>
+  <li><b>Videó:</b> a képkockák NV12 formátumba (BT.709, korlátozott tartomány) alakulnak, és a Media Foundation H.264 kódolója kódolja őket, minőségalapú sebességszabályozással. Hardveres kódolót használ, ha van.</li>
+  <li><b>Hang:</b> a rendszerhangot WASAPI loopbackkel rögzíti (48 kHz, sztereó), és 160 kbit/s-os AAC-vé kódolja. A hang és a kép ugyanazt a felvételi órát követi, így a szünet és a csend nem tolja el őket egymáshoz képest.</li>
+  <li><b>Fájlok:</b> töredékes MP4, a Media Foundation sink writere írja.</li>
+  <li><b>Beállítások:</b> <code>%APPDATA%\mnRekord\settings.json</code>. A fájl törlésével visszaállnak az alapértékek.</li>
+  <li><b>Egy példány:</b> egy nevesített mutex biztosítja, hogy egy példány fusson; a parancsok a <code>\\.\pipe\mnRekord</code> nevesített csövön jutnak el hozzá.</li>
+</ul>
+
+<h2 id="build">Építés forrásból</h2>
+<p>Windows 10 vagy újabb és egy aktuális stabil <a href="https://rustup.rs">Rust</a> eszközlánc kell hozzá.</p>
+<pre><code>git clone https://github.com/miklosnemeth/mnRekord
+cd mnRekord
+cargo test --release
+cargo build --release</code></pre>
+<p>A program a <code>target\release\mnrekord.exe</code>. A telepítő elkészítéséhez telepítsd az <a href="https://jrsoftware.org/isinfo.php">Inno Setup 6</a>-ot, és futtasd az <code>installer\build.ps1</code> fájlt; az eredmény a <code>dist\mnRekord-&lt;verzió&gt;-setup.exe</code>.</p>
+<p>Az mnRekord Rustban készült, az <a href="https://github.com/emilk/egui">egui</a> és a <code>windows</code> crate használatával. MIT licenc alatt jelent meg.</p>
+
+</main>
+</div>
+</div>
+
+<footer class="no-print">
+  <div class="wrap">
+    <span>mnRekord 0.2.0 · MIT licenc</span>
+    <span><a href="index.html">Főoldal</a> · <a href="../mnRekord-kezikonyv.pdf">Kézikönyv PDF-ben</a> · <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>
