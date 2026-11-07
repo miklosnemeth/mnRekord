@@ -30,7 +30,7 @@ The executable is `target/release/mnrekord.exe`.
 
 ## Installer
 
-`installeruild.ps1` builds the release exe and an installer, `dist\mnRekord-<version>-setup.exe`
+`installer\build.ps1` builds the release exe and an installer, `dist\mnRekord-<version>-setup.exe`
 (needs [Inno Setup 6](https://jrsoftware.org/isinfo.php)). It installs per user by default, adds a
 Start menu entry (and optionally a desktop icon) and an uninstaller. English and Hungarian.
 
