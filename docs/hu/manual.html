@@ -101,7 +101,7 @@
   <li>rögzít egy területet, egy monitort vagy egy ablakot; a területet a képernyő előnézetén jelölheted ki, vagy közvetlenül az asztalon rajzolhatod meg;</li>
   <li>méretezés közben megtartja a <b>16:9</b> vagy <b>9:16</b> képarányt, kész méretekkel (360p, HD, FHD, QHD, 4K UHD);</li>
   <li>felvétel közben <b>követi az ablakot</b>, így a kép az ablakon marad, ha elmozdítod;</li>
-  <li>rögzíti a rendszerhangot (mindent, amit hallasz) AAC-ként, vagy csak a kijelölt ablak hangját;</li>
+  <li>rögzíti a rendszerhangot (mindent, amit hallasz) AAC-ként, vagy csak egy általad választott program hangját;</li>
   <li>kirajzolja az egérmutatót, opcionális halóval és kattintásgyűrűvel;</li>
   <li>szüneteltet, folytat, jelölőket tesz a felvételbe; a hosszú felvételeket részekre bontja; az utolsó felvételből GIF-et készít;</li>
   <li>vezérelhető globális gyorsbillentyűkkel, tálcaikonnal és parancssorból;</li>
@@ -142,7 +142,7 @@
   <tr><td><b>Állapot</b> (fent, a név mellett)</td><td>„Kész a felvételre”, ha elindítható a felvétel.</td></tr>
   <tr><td><b>Fogaskerék</b> (jobb felül)</td><td>Megnyitja a <a href="#prefs">Beállításokat</a>.</td></tr>
   <tr><td><b>Képernyő</b> kártya</td><td>Kapcsoló a képernyő rögzítéséhez. Mutatja a videó méretét és képkockasebességét, például <i>1920 x 1080, 30 fps</i>.</td></tr>
-  <tr><td><b>Rendszerhang</b> kártya</td><td>Kapcsoló a számítógép hangjának rögzítéséhez, szintjelzővel, ami mozog, amíg valami szól. Ha kijelöltél egy ablakot, megjelenik a <b>Csak ez az ablak</b> kapcsoló: bekapcsolva csak annak az ablaknak (és segédfolyamatainak) a hangja kerül a felvételre, így a háttérzene és az értesítések kimaradnak. Windows 10 2004-es vagy újabb verzió kell hozzá; ha egy ablak hangját nem lehet rögzíteni, az mnRekord szól, és a teljes rendszerhangot rögzíti.</td></tr>
+  <tr><td><b>Rendszerhang</b> kártya</td><td>Kapcsoló a számítógép hangjának rögzítéséhez, szintjelzővel, ami mozog, amíg valami szól. A szintjelző alatti listából választhatsz: <b>Minden hang</b>, vagy egy program, aminek van nyitott ablaka, például egy böngésző vagy egy lejátszó. Ilyenkor csak annak a programnak (és segédfolyamatainak) a hangja kerül a felvételre, így a háttérzene és az értesítések kimaradnak. A választás nem függ a felvett kerettől, és megmarad. Windows 10 2004-es vagy újabb verzió kell hozzá. Ha a program indításkor nem fut, vagy a hangját nem lehet rögzíteni, az mnRekord szól, és a teljes rendszerhangot rögzíti.</td></tr>
   <tr><td><b>Terület</b> kártya</td><td>Monitorok, <b>Kijelölés a képernyőn</b>, szélesség és magasság, <b>Arány</b>, <b>Méret</b> és <b>Követés</b>. Lásd: <a href="#region">Mit rögzítsünk?</a></td></tr>
   <tr><td><b>Felvétel</b> gomb</td><td>Elindítja a felvételt. Mutatja a gyorsbillentyűt (<kbd>F9</kbd>). Szürke, ha semmi nincs bekapcsolva rögzítésre.</td></tr>
   <tr><td><b>Utolsó felvétel</b> és <b>GIF készítése</b></td><td>Felvétel után jelennek meg a Felvétel gomb alatt, ha az „Kilépés leállítás után” ki van kapcsolva (különben a program már kilépett). Lásd: <a href="#files">Felvételek és fájlok</a>.</td></tr>
@@ -312,6 +312,7 @@ mnrekord stop</code></pre>
   <tr><td><code>setoutputpath "mappa"</code></td><td>Beállítja a kimeneti mappát.</td></tr>
   <tr><td><code>enablescreenrecording</code>, <code>disablescreenrecording</code></td><td>Be- vagy kikapcsolja a Képernyő kártyát.</td></tr>
   <tr><td><code>unmutesystemaudio</code>, <code>mutesystemaudio</code></td><td>Be- vagy kikapcsolja a Rendszerhang kártyát.</td></tr>
+  <tr><td><code>setsoundapp chrome.exe</code></td><td>Csak ennek a programnak a hangját rögzíti. A <code>setsoundapp all</code> visszaáll a teljes hangra.</td></tr>
 </table>
 <p>Egy további mód nem a futó példányt használja:</p>
 <pre><code>mnrekord --gif felvetel.mp4 felvetel.gif</code></pre>

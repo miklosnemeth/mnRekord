@@ -100,8 +100,9 @@ pub struct App {
     pub hotkeys: Option<Hotkeys>,
     pub hot: Arc<HotState>,
     pub system: Option<Arc<AudioSource>>,
-    /// The process whose sound `system` captures (None = all sound).
+    /// The process whose sound `system` captures (None = all sound), and the setting it was started for.
     pub system_pid: Option<u32>,
+    pub system_app: String,
     pub preview: Option<Preview>,
     /// The window the region was picked from, if it was picked by a click on a window.
     pub picked_window: Option<win::WindowInfo>,
@@ -168,6 +169,7 @@ impl App {
             hot,
             system: None,
             system_pid: None,
+            system_app: String::new(),
             preview: None,
             picked_window: None,
             tray: None,
@@ -274,26 +276,35 @@ impl App {
 
     // ---- live sources ----
 
-    fn sync_sources(&mut self) {
+    /// `resolve`: look again for the chosen program, as it may have been started since.
+    fn sync_sources(&mut self, resolve: bool) {
         if self.demo {
             return;
         }
-        // Only the sound of the picked window, when asked for; otherwise everything the computer plays.
-        let want = self.settings.window_sound_only.then(|| self.picked_window.as_ref().map(|w| w.pid)).flatten();
-        let failed = self.system.as_ref().is_some_and(|s| s.error.lock().unwrap().is_some());
-        if self.system.is_some() && (!self.settings.record_system || self.system_pid != want || (failed && want.is_some())) {
+        let app = self.settings.sound_app.clone();
+        let failed = self.system_pid.is_some() && self.system.as_ref().is_some_and(|s| s.error.lock().unwrap().is_some());
+        let retry = resolve && !app.is_empty() && self.system_pid.is_none();
+        if self.system.is_some() && (!self.settings.record_system || self.system_app != app || failed || retry) {
             if let Some(s) = self.system.take() {
                 s.stop();
             }
-            if failed && want.is_some() {
-                // The window's sound could not be captured: say so and fall back to all sound.
-                self.notice = Some(tr("The sound of this window can't be captured. Recording all system sound.").into());
-                self.settings.window_sound_only = false;
+            if failed {
+                // The program's sound could not be captured: say so and go back to all sound.
+                self.notice = Some(fill(tr("The sound of {} can't be captured. Recording all system sound."), &[&app]));
+                self.settings.sound_app.clear();
                 self.persist();
             }
         }
         if self.settings.record_system && self.system.is_none() {
-            let pid = self.settings.window_sound_only.then(|| self.picked_window.as_ref().map(|w| w.pid)).flatten();
+            let app = self.settings.sound_app.clone();
+            let mut pid = None;
+            if !app.is_empty() {
+                pid = win::sound_apps().into_iter().find(|(n, _, _)| n.eq_ignore_ascii_case(&app)).map(|a| a.1);
+                if pid.is_none() {
+                    self.notice = Some(fill(tr("{} isn't running. Recording all system sound."), &[&app]));
+                }
+            }
+            self.system_app = app;
             self.system_pid = pid;
             self.system = Some(AudioSource::start(pid));
         }
@@ -439,7 +450,7 @@ impl App {
         }
         self.notice = None;
         self.prefs_open = false;
-        self.sync_sources();
+        self.sync_sources(true);
         let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
         let temp_dir = PathBuf::from(&self.settings.temp_folder).join(format!("{}{stamp}", recorder::TEMP_PREFIX));
         let cfg = SessionConfig {
@@ -720,6 +731,10 @@ impl App {
                 }
             }
             Cmd::SystemAudio(on) => self.set_system_audio(on),
+            Cmd::SoundApp(name) => {
+                self.settings.sound_app = name;
+                self.persist();
+            }
             Cmd::Screen(on) => self.settings.record_screen = on,
             Cmd::DrawRegion => {
                 if self.rec.is_none() && matches!(self.mode, Mode::Idle) {
@@ -804,7 +819,7 @@ impl App {
         }
         self.sync_border();
         if self.rec.is_none() {
-            self.sync_sources();
+            self.sync_sources(false);
         }
         self.update_preview_texture();
         self.tick_recording();

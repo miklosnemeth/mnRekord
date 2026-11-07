@@ -26,6 +26,8 @@ pub enum Cmd {
     /// Record the first visible window whose title contains this text, and follow it.
     FollowWindow(String),
     SystemAudio(bool),
+    /// Record only the sound of this program (like `chrome.exe`); empty = all sound.
+    SoundApp(String),
     Screen(bool),
     DrawRegion,
     /// From the tray menu.
@@ -68,6 +70,12 @@ pub fn parse_args(args: &[String]) -> Vec<Cmd> {
             "followwindow" => {
                 if let Some(s) = val {
                     out.push(Cmd::FollowWindow(s));
+                }
+                i += 1;
+            }
+            "setsoundapp" => {
+                if let Some(s) = val {
+                    out.push(Cmd::SoundApp(if s.eq_ignore_ascii_case("all") { String::new() } else { s }));
                 }
                 i += 1;
             }

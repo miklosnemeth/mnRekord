@@ -283,13 +283,31 @@ impl App {
                 self.set_system_audio(on);
             }
             meter(ui, ui.available_width(), level);
-            if self.picked_window.is_some() {
-                ui.horizontal(|ui| {
-                    if toggle(ui, &mut self.settings.window_sound_only).on_hover_text(tr("Record only the sound of the window that was picked")).changed() {
-                        self.persist();
-                    }
-                    ui.label(RichText::new(tr("Only this window")).small().color(MUTED));
-                });
+            if self.settings.record_system {
+                let all = tr("All sound");
+                let current = if self.settings.sound_app.is_empty() { all.to_string() } else { self.settings.sound_app.clone() };
+                let mut choice: Option<String> = None;
+                egui::ComboBox::from_id_salt("sound_app")
+                    .width(ui.available_width() - 8.0)
+                    .selected_text(current)
+                    .show_ui(ui, |ui| {
+                        if ui.selectable_label(self.settings.sound_app.is_empty(), all).clicked() {
+                            choice = Some(String::new());
+                        }
+                        for (name, _, title) in crate::win::sound_apps() {
+                            let short: String = title.chars().take(28).collect();
+                            let selected = self.settings.sound_app.eq_ignore_ascii_case(&name);
+                            if ui.selectable_label(selected, format!("{name}  ·  {short}")).clicked() {
+                                choice = Some(name);
+                            }
+                        }
+                    })
+                    .response
+                    .on_hover_text(tr("Record the sound of everything, or only of one program"));
+                if let Some(c) = choice {
+                    self.settings.sound_app = c;
+                    self.persist();
+                }
             }
             if let Some(e) = self.system.as_ref().and_then(|s| s.error.lock().unwrap().clone()) {
                 ui.label(RichText::new(e).small().color(CORAL));

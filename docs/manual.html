@@ -100,7 +100,7 @@
   <li>records a region, a monitor or a window, chosen on a preview of your desktop or drawn directly on the desktop;</li>
   <li>keeps a <b>16:9</b> or <b>9:16</b> aspect ratio while you resize, with ready-made sizes (360p, HD, FHD, QHD, 4K UHD);</li>
   <li>can <b>follow a window</b> while recording, so the picture stays on it when you move it;</li>
-  <li>records system audio (everything you hear) as AAC, or only the sound of the window you picked;</li>
+  <li>records system audio (everything you hear) as AAC, or only the sound of one program you choose;</li>
   <li>draws the mouse pointer, with an optional halo and a ring on clicks;</li>
   <li>pauses, resumes and adds markers; splits long recordings into parts; makes a GIF from the last recording;</li>
   <li>is controlled by global shortcuts, a tray icon or the command line;</li>
@@ -142,7 +142,7 @@
   <tr><td><b>Status</b> (top, next to the name)</td><td>“Ready to record” when a recording can start.</td></tr>
   <tr><td><b>Gear</b> (top right)</td><td>Opens the <a href="#prefs">Preferences</a>.</td></tr>
   <tr><td><b>Screen</b> card</td><td>Switch for recording the screen. Shows the size and frame rate of the video, for example <i>1920 x 1080 at 30 fps</i>.</td></tr>
-  <tr><td><b>System audio</b> card</td><td>Switch for recording the sound the computer plays, with a level meter that moves while something is playing. After you pick a window, <b>Only this window</b> appears: with it on, only that window&rsquo;s sound (and its helper processes) is recorded, so music in the background and notifications stay out. It needs Windows 10 version 2004 or newer; if the sound of a window can&rsquo;t be captured, mnRekord says so and records all sound.</td></tr>
+  <tr><td><b>System audio</b> card</td><td>Switch for recording the sound the computer plays, with a level meter that moves while something is playing. Under the meter a list lets you choose <b>All sound</b> or one program that has a window open, for example a browser or a player: then only that program&rsquo;s sound (with its helper processes) is recorded, so music in the background and notifications stay out. The choice does not depend on the recorded frame, and it is remembered. It needs Windows 10 version 2004 or newer. If the program isn&rsquo;t running when you start, or its sound can&rsquo;t be captured, mnRekord says so and records all sound.</td></tr>
   <tr><td><b>Region</b> card</td><td>Monitors, <b>Draw on screen</b>, width and height, <b>Ratio</b>, <b>Size</b> and <b>Follow</b>. See <a href="#region">Choosing what to record</a>.</td></tr>
   <tr><td><b>Record</b> button</td><td>Starts the recording. Shows the shortcut (<kbd>F9</kbd>). It is grey when nothing is switched on to record.</td></tr>
   <tr><td><b>Last recording</b> and <b>Make GIF</b></td><td>Appear under the Record button after a recording, when “Exit after stopped” is switched off (otherwise mnRekord has already quit). See <a href="#files">Recordings and files</a>.</td></tr>
@@ -312,6 +312,7 @@ mnrekord stop</code></pre>
   <tr><td><code>setoutputpath "folder"</code></td><td>Sets the output folder.</td></tr>
   <tr><td><code>enablescreenrecording</code>, <code>disablescreenrecording</code></td><td>Switch the Screen card on or off.</td></tr>
   <tr><td><code>unmutesystemaudio</code>, <code>mutesystemaudio</code></td><td>Switch System audio on or off.</td></tr>
+  <tr><td><code>setsoundapp chrome.exe</code></td><td>Record only the sound of this program. <code>setsoundapp all</code> goes back to all sound.</td></tr>
 </table>
 <p>One more mode does not use the running copy:</p>
 <pre><code>mnrekord --gif recording.mp4 recording.gif</code></pre>

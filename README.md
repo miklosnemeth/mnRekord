@@ -9,7 +9,7 @@ Documentation: [manual (PDF)](docs/mnRekord-manual.pdf), [magyar kézikönyv (PD
 - Record a screen region, a whole monitor or a window, chosen on a stage or drawn directly on the desktop
 - Follow a window: the frame moves with the window it was picked from while recording
 - Aspect ratio lock (16:9, 9:16 or free) with size presets (360p, HD, FHD, QHD, 4K UHD)
-- System audio (loopback) with a level meter, or only the sound of the picked window (Windows 10 2004 or newer)
+- System audio (loopback) with a level meter, or only the sound of one program you choose (Windows 10 2004 or newer)
 - H.264 + AAC in MP4 (Media Foundation) with a quality setting, hardware encoding when available, 15, 24, 30 or 60 fps
 - Pointer highlight and click ring
 - Long recordings can be split into parts (a new file every N minutes)

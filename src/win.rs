@@ -53,6 +53,41 @@ pub struct WindowInfo {
     pub pid: u32,
 }
 
+/// The file name of the program a process runs, like `chrome.exe`.
+pub fn process_name(pid: u32) -> Option<String> {
+    use windows::Win32::System::Threading::{OpenProcess, QueryFullProcessImageNameW, PROCESS_NAME_WIN32, PROCESS_QUERY_LIMITED_INFORMATION};
+    unsafe {
+        let h = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid).ok()?;
+        let mut buf = [0u16; 520];
+        let mut n = buf.len() as u32;
+        let ok = QueryFullProcessImageNameW(h, PROCESS_NAME_WIN32, windows::core::PWSTR(buf.as_mut_ptr()), &mut n).is_ok();
+        let _ = CloseHandle(h);
+        if !ok {
+            return None;
+        }
+        let path = String::from_utf16_lossy(&buf[..n as usize]);
+        Path::new(&path).file_name().map(|f| f.to_string_lossy().into_owned())
+    }
+}
+
+/// Programs that have a window on screen, for choosing whose sound to record: (program, a process id, a window title).
+/// One entry per program, in front-to-back order; this program itself is left out.
+pub fn sound_apps() -> Vec<(String, u32, String)> {
+    let me = std::process::id();
+    let mut out: Vec<(String, u32, String)> = Vec::new();
+    for w in visible_windows(HWND::default()) {
+        if w.pid == me {
+            continue;
+        }
+        if let Some(name) = process_name(w.pid) {
+            if !out.iter().any(|(n, _, _)| n.eq_ignore_ascii_case(&name)) {
+                out.push((name, w.pid, w.title));
+            }
+        }
+    }
+    out
+}
+
 /// The visible frame of a window (without the invisible resize border), if it still exists on screen.
 pub fn window_frame(hwnd: isize) -> Option<Rect> {
     unsafe {
