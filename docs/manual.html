@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mnRekord manual</title>
+<meta name="description" content="User manual for mnRekord, a screen recorder for Windows.">
+<link rel="icon" href="img/icon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .contents { display: none; }
+  @media print {
+    .contents { display: block; }
+    .contents h2 { border: 0; margin-top: 0; }
+    .contents h2::before { content: none; }
+    .contents h2 { counter-increment: none; }
+    .contents ol { list-style: none; padding: 0; counter-reset: c; columns: 1; }
+    .contents li { counter-increment: c; padding: 3pt 0; border-bottom: 1px dotted #c9ccd3; font-size: 11pt; }
+    .contents li::before { content: counter(c) ".  "; color: #c93d28; font-weight: 600; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top no-print">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="img/icon.png" alt="">mnRekord</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a class="on" href="manual.html">Manual</a>
+      <a href="mnRekord-manual.pdf">PDF</a>
+      <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<!-- Cover page: only on paper -->
+<div class="cover">
+  <img class="icon" src="img/icon.png" alt="">
+  <h1>mn<span>Rekord</span></h1>
+  <p>User manual</p>
+  <img class="shot" src="img/main.png" alt="">
+  <div class="meta">Version 0.2.0 &nbsp;·&nbsp; Windows 10 and 11</div>
+</div>
+
+<div class="wrap">
+<div class="doc">
+
+<aside class="toc no-print">
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#install">Installation</a></li>
+    <li><a href="#quick">Quick start</a></li>
+    <li><a href="#window">The main window</a></li>
+    <li><a href="#region">Choosing what to record</a></li>
+    <li><a href="#recording">Recording</a></li>
+    <li><a href="#files">Recordings and files</a></li>
+    <li><a href="#prefs">Preferences</a></li>
+    <li><a href="#shortcuts">Keyboard shortcuts</a></li>
+    <li><a href="#tray">Tray icon</a></li>
+    <li><a href="#cli">Command line</a></li>
+    <li><a href="#recovery">Recovering a recording</a></li>
+    <li><a href="#trouble">Troubleshooting</a></li>
+    <li><a href="#tech">Technical notes</a></li>
+    <li><a href="#build">Building from source</a></li>
+  </ol>
+</aside>
+
+<main class="manual">
+
+<section class="contents">
+  <h2>Contents</h2>
+  <ol>
+    <li>Introduction</li>
+    <li>Installation</li>
+    <li>Quick start</li>
+    <li>The main window</li>
+    <li>Choosing what to record</li>
+    <li>Recording</li>
+    <li>Recordings and files</li>
+    <li>Preferences</li>
+    <li>Keyboard shortcuts</li>
+    <li>Tray icon</li>
+    <li>Command line</li>
+    <li>Recovering a recording</li>
+    <li>Troubleshooting</li>
+    <li>Technical notes</li>
+    <li>Building from source</li>
+  </ol>
+</section>
+
+<h1 class="no-print">mnRekord manual</h1>
+<p class="byline no-print">Version 0.2.0 · Windows 10 and 11</p>
+
+<h2 id="intro">Introduction</h2>
+<p>mnRekord is a small screen recorder for Windows. It records a part of the screen, a whole monitor or a single window, together with the sound the computer plays, and saves the result as an MP4 video. The window is dark, simple, and has everything you need to start a recording in a few clicks.</p>
+<p>What it does:</p>
+<ul>
+  <li>records a region, a monitor or a window, chosen on a preview of your desktop or drawn directly on the desktop;</li>
+  <li>keeps a <b>16:9</b> or <b>9:16</b> aspect ratio while you resize, with ready-made sizes (360p, HD, FHD, QHD, 4K UHD);</li>
+  <li>can <b>follow a window</b> while recording, so the picture stays on it when you move it;</li>
+  <li>records system audio (everything you hear) as AAC;</li>
+  <li>draws the mouse pointer, with an optional halo and a ring on clicks;</li>
+  <li>pauses, resumes and adds markers; splits long recordings into parts; makes a GIF from the last recording;</li>
+  <li>is controlled by global shortcuts, a tray icon or the command line;</li>
+  <li>offers to recover a recording that was cut off by a crash.</li>
+</ul>
+<p>mnRekord does not record a microphone or a webcam.</p>
+
+<h2 id="install">Installation</h2>
+<h3>Requirements</h3>
+<ul>
+  <li>Windows 10 or Windows 11, 64-bit.</li>
+  <li>A playback device, if you want system audio.</li>
+  <li>The Windows H.264 and AAC encoders. They are part of Windows; on the “N” editions install Microsoft’s <i>Media Feature Pack</i> first.</li>
+</ul>
+<h3>With the installer</h3>
+<p>Run <code>mnRekord-0.2.0-setup.exe</code>. By default it installs for your user only and needs no administrator rights; the dialog also offers an install for all users. It adds a Start menu entry, optionally a desktop icon, and an uninstaller (<i>Settings → Apps</i>). The installer is available in English and Hungarian.</p>
+<h3>Without installing</h3>
+<p><code>mnrekord.exe</code> is a single file. Copy it anywhere and run it; nothing else is needed.</p>
+<h3>Uninstalling</h3>
+<p>Remove mnRekord in <i>Settings → Apps</i>. Your settings (<code>%APPDATA%\mnRekord</code>) and your recordings are not deleted.</p>
+
+<h2 id="quick">Quick start</h2>
+<ol>
+  <li>Start mnRekord. The stage on the right shows your desktop and a frame; the frame is what will be recorded.</li>
+  <li>Drag the frame or its handles to cover what you want to record. Or click <b>Screen 1</b> to record a whole monitor, or <b>Draw on screen</b> to click a window.</li>
+  <li>Pick a size with <b>Ratio</b> and <b>Size</b>, for example <i>16:9</i> and <i>FHD</i>.</li>
+  <li>Press <b>Record</b> (or <kbd>F9</kbd>). A 3-2-1 countdown starts, and the window turns into a slim bar.</li>
+  <li>Press <b>Stop</b> (or <kbd>F10</kbd>). The video is saved in <code>Documents\mnRekord</code> and opens in your video player.</li>
+</ol>
+
+<h2 id="window">The main window</h2>
+<figure>
+  <div class="shot"><img src="img/main.png" alt="The main window of mnRekord"></div>
+  <figcaption>The main window. The picture on the stage is a demo picture.</figcaption>
+</figure>
+<table>
+  <tr><th>Part</th><th>What it does</th></tr>
+  <tr><td><b>Status</b> (top, next to the name)</td><td>“Ready to record” when a recording can start.</td></tr>
+  <tr><td><b>Gear</b> (top right)</td><td>Opens the <a href="#prefs">Preferences</a>.</td></tr>
+  <tr><td><b>Screen</b> card</td><td>Switch for recording the screen. Shows the size and frame rate of the video, for example <i>1920 x 1080 at 30 fps</i>.</td></tr>
+  <tr><td><b>System audio</b> card</td><td>Switch for recording the sound the computer plays, with a level meter that moves while something is playing.</td></tr>
+  <tr><td><b>Region</b> card</td><td>Monitors, <b>Draw on screen</b>, width and height, <b>Ratio</b>, <b>Size</b> and <b>Follow</b>. See <a href="#region">Choosing what to record</a>.</td></tr>
+  <tr><td><b>Record</b> button</td><td>Starts the recording. Shows the shortcut (<kbd>F9</kbd>). It is grey when nothing is switched on to record.</td></tr>
+  <tr><td><b>Last recording</b> and <b>Make GIF</b></td><td>Appear under the Record button after a recording, when “Exit after stopped” is switched off (otherwise mnRekord has already quit). See <a href="#files">Recordings and files</a>.</td></tr>
+  <tr><td><b>Stage</b></td><td>A live picture of all your monitors, with the frame you are going to record.</td></tr>
+</table>
+<div class="note"><b>Note</b>The stage refreshes about 30 times a second and stops while the window is minimized. The recorder’s own window is hidden from the picture.</div>
+
+<h2 id="region">Choosing what to record</h2>
+<h3>The frame on the stage</h3>
+<ul>
+  <li><b>Move:</b> drag inside the frame.</li>
+  <li><b>Resize:</b> drag one of the eight handles (four corners, four edge middles).</li>
+  <li>With a locked ratio, a <b>corner</b> grows from the opposite corner, following the mouse in any direction. An <b>edge</b> grows around the middle of the frame, and the frame is pushed back inside the screen when it would leave it, so a handle never gets stuck.</li>
+  <li>With <b>Free</b> ratio the edges and corners resize the frame without any constraint.</li>
+</ul>
+<h3>Monitors</h3>
+<p>The <b>Screen 1</b>, <b>Screen 2</b> … buttons select a whole monitor. With a locked ratio the largest frame of that ratio fits in the monitor, centred.</p>
+<h3>Draw on screen</h3>
+<p>The window disappears and a still picture of your desktop covers the screen. Then:</p>
+<ul>
+  <li><b>click</b> a window or a monitor to record it (a window is recorded as it is placed at the moment, with its visible frame);</li>
+  <li>or <b>drag</b> a rectangle; a magnifier next to the pointer helps you hit the exact pixel;</li>
+  <li><kbd>Esc</kbd> cancels.</li>
+</ul>
+<p>When you pick a window, the <b>Follow</b> switch appears (see below).</p>
+<h3>Ratio and size</h3>
+<p>The <b>Ratio</b> list is the base setting: <i>16:9</i>, <i>9:16</i> or <i>Free</i>. With 16:9 or 9:16 the frame always keeps that ratio, whatever you do with it, and the <b>Size</b> list offers sizes of that ratio:</p>
+<table>
+  <tr><th>Name</th><th>16:9</th><th>9:16</th></tr>
+  <tr><td>360p</td><td>640 × 360</td><td>360 × 640</td></tr>
+  <tr><td>HD</td><td>1280 × 720</td><td>720 × 1280</td></tr>
+  <tr><td>FHD</td><td>1920 × 1080</td><td>1080 × 1920</td></tr>
+  <tr><td>QHD</td><td>2560 × 1440</td><td>1440 × 2560</td></tr>
+  <tr><td>4K UHD</td><td>3840 × 2160</td><td>2160 × 3840</td></tr>
+</table>
+<p>Sizes bigger than your screen are greyed out. Picking a size keeps the centre of the frame where it is. With <b>Free</b> the list offers AD (600 × 315), SD, HD, FHD, 2K, QHD and 4K UHD.</p>
+<p><b>Width</b> and <b>Height</b> are numbers you can drag or type. With a locked ratio changing one changes the other. The video is always an even number of pixels wide and high, because H.264 needs that.</p>
+<h3>Follow a window</h3>
+<p>When the region was picked by clicking a window, the <b>Follow</b> switch appears under <b>Size</b>. If it is on, the frame keeps its place <i>inside the window</i> during the recording: move the window and the picture moves with it. The frame keeps its size. A minimized or closed window is not followed; the frame stays where it was last seen.</p>
+<p>The same can be done from the command line, see <a href="#cli"><code>followwindow</code></a>. Selecting a monitor or drawing a rectangle switches following off.</p>
+
+<h2 id="recording">Recording</h2>
+<figure>
+  <div class="shot"><img src="img/bar.png" alt="The recording bar"></div>
+  <figcaption>The recording bar: timer, Pause, Stop, Marker, Restart, a level meter and a close button.</figcaption>
+</figure>
+<h3>Start</h3>
+<p>Press <b>Record</b> or <kbd>F9</kbd>. After a short delay the numbers 3, 2, 1 appear on the recorded region (you can switch the countdown off). The window shrinks to a slim bar, which you can drag anywhere. By default it is excluded from the recording, so it never appears in the video. When “Show region indicator” is on, a thin frame marks the recorded area on the desktop (it is not recorded either).</p>
+<h3>The bar</h3>
+<table>
+  <tr><th>Control</th><th>What it does</th></tr>
+  <tr><td>Timer</td><td>Recorded time. The dot blinks while recording and is amber while paused.</td></tr>
+  <tr><td><b>Pause</b> / <b>Resume</b></td><td>Pauses and continues. Paused time is not in the video. (Shortcut: <kbd>F9</kbd>.)</td></tr>
+  <tr><td><b>Stop</b></td><td>Ends the recording and saves it. (Shortcut: <kbd>F10</kbd>.)</td></tr>
+  <tr><td><b>Marker</b></td><td>Notes the current time in a text file next to the video. (Shortcut: <kbd>Ctrl</kbd>+<kbd>M</kbd>.)</td></tr>
+  <tr><td><b>Restart</b></td><td>Asks whether to delete the recording so far; if you agree, you are back in the main window to start again.</td></tr>
+  <tr><td>Meter</td><td>The level of the system audio.</td></tr>
+  <tr><td><b>✕</b></td><td>Asks whether to delete this recording and quit.</td></tr>
+</table>
+<p>The window title also shows the state, so the taskbar tells you even when the bar is hidden: <code>● 00:01:24  mnRekord</code> while recording and <code>Paused 00:01:24  mnRekord</code> while paused.</p>
+<h3>Pause and the mouse</h3>
+<p>If “Restore cursor location after pause” is on (the default), the mouse pointer jumps back to where it was when you paused, once you resume.</p>
+<h3>Stop and save</h3>
+<p>After <b>Stop</b> the recording is saved in the output folder, named after the <a href="#files">file name template</a>. If “Prompt for file name” is selected, a Save dialog asks for the name. With the defaults, the recording is then opened in your video player and mnRekord quits (“Exit after stopped”, “Open recording after stopped”).</p>
+<p>If you stop during the countdown, nothing is saved.</p>
+<h3>Low disk space</h3>
+<p>If less than about 300 MB is free on the drive of the temporary folder, the recording stops by itself and what was recorded so far is saved.</p>
+
+<h2 id="files">Recordings and files</h2>
+<h3>The video</h3>
+<p>MP4 with H.264 video (Main profile) and AAC stereo audio at 48 kHz. The file is written in fragments, so even a recording cut short by a crash plays up to the last fragment.</p>
+<h3>File names</h3>
+<p>The name comes from a template (Preferences → Files). The default is <code>Rec {date} {time}</code>, which gives <code>Rec 2026-11-07 14-05-09.mp4</code>.</p>
+<table>
+  <tr><th>Token</th><th>Replaced by</th></tr>
+  <tr><td><code>{date}</code></td><td>The date, <code>2026-11-07</code></td></tr>
+  <tr><td><code>{time}</code></td><td>The time, <code>14-05-09</code></td></tr>
+  <tr><td><code>{window}</code></td><td>The title of the window you picked on screen, or <code>screen</code></td></tr>
+</table>
+<p>Characters that are not allowed in file names are replaced by <code>_</code>. If a file with that name exists, <code>(1)</code>, <code>(2)</code> … is added.</p>
+<h3>Markers</h3>
+<p>If you added markers, a text file <code>name.markers.txt</code> is saved next to the video, one line per marker: the time and the marker’s number, separated by a tab, for example <code>00:01:12.500&nbsp;&nbsp;Marker 1</code>. Markers are only recorded when the screen is recorded.</p>
+<h3>Split recordings</h3>
+<p>With <b>Start a new file every N min</b> (Preferences → Inputs) a long recording is cut into parts. When a part is full, the next file starts at once and the finished part is closed. The files are named <code>name-part1.mp4</code>, <code>name-part2.mp4</code> … and each one plays by itself. Paused time does not count. If a crash happens, only the part being written is at risk.</p>
+<h3>GIF</h3>
+<p>When “Exit after stopped” is off, mnRekord stays open after a recording and shows <b>Make GIF</b> under the Record button. It turns the last recording into an animated GIF next to it. The GIF is at most 640 pixels wide, 12 frames a second, and uses the first 30 seconds. GIFs are big files; a 30-second picture can be over 10 MB. Making it takes a few seconds, and the folder opens when it is ready. For a split recording the GIF is made from the first part.</p>
+
+<h2 id="prefs">Preferences</h2>
+<p>Open them with the gear. Most changes apply at once; everything is saved when you close the Preferences.</p>
+<h3>General</h3>
+<figure>
+  <div class="shot"><img src="img/prefs0.png" alt="Preferences, General"></div>
+</figure>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Show recorder countdown</td><td>The 3-2-1 before the recording starts.</td></tr>
+  <tr><td>Do not capture recorder on screen</td><td>Hides mnRekord’s own windows (bar, countdown, region frame) from the video.</td></tr>
+  <tr><td>Restore cursor location after pause</td><td>Moves the pointer back where it was when you resume.</td></tr>
+  <tr><td>Show the mouse pointer in the recording</td><td>Draws the pointer into the video.</td></tr>
+  <tr><td>Highlight the pointer and clicks</td><td>A soft yellow halo around the pointer, and a red ring while a mouse button is held down.</td></tr>
+  <tr><td>Exit after stopped</td><td>Quits mnRekord when the recording is saved.</td></tr>
+  <tr><td>Open recording after stopped</td><td>Opens the saved file in the default player.</td></tr>
+  <tr><td>Show region indicator</td><td>A thin frame on the desktop around the region while it is not the whole monitor.</td></tr>
+  <tr><td>Automatically minimize recording window</td><td>Hides the bar when the recording starts (use the shortcuts or the tray icon).</td></tr>
+</table>
+<h3>Inputs</h3>
+<figure>
+  <div class="shot"><img src="img/prefs1.png" alt="Preferences, Inputs"></div>
+</figure>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Maximum frame rate</td><td>15, 24, 30 or 60 frames a second.</td></tr>
+  <tr><td>Quality</td><td>1 to 100, default 75. Higher is sharper and gives bigger files. On a test clip with moving colour bars, quality 20 gave about 1 MB and quality 90 about 8 MB for the same ten seconds.</td></tr>
+  <tr><td>Start a new file every</td><td>Minutes after which a new part starts; 0 means one file. See <a href="#files">Split recordings</a>.</td></tr>
+  <tr><td>Use the graphics card to encode</td><td>Lets Windows use the GPU’s H.264 encoder when there is one. After a recording the name of the encoder that was used is shown here. Switch it off if you have problems with a graphics driver.</td></tr>
+</table>
+<h3>Files</h3>
+<figure>
+  <div class="shot"><img src="img/prefs2.png" alt="Preferences, Files"></div>
+</figure>
+<table>
+  <tr><th>Setting</th><th>Meaning</th></tr>
+  <tr><td>Automatic file name / Prompt for file name</td><td>Save under the template’s name, or ask in a Save dialog.</td></tr>
+  <tr><td>File name template</td><td>With <code>{date}</code>, <code>{time}</code>, <code>{window}</code>.</td></tr>
+  <tr><td>Default output folder</td><td>Where recordings are saved. Default <code>Documents\mnRekord</code>.</td></tr>
+  <tr><td>Temporary storage folder</td><td>Where a recording is written while it runs. A fast drive with enough space is best. Default: the Windows temp folder.</td></tr>
+</table>
+<h3>Shortcuts</h3>
+<figure>
+  <div class="shot"><img src="img/prefs3.png" alt="Preferences, Shortcuts"></div>
+</figure>
+<p>See the next chapter.</p>
+
+<h2 id="shortcuts">Keyboard shortcuts</h2>
+<p>The shortcuts work everywhere in Windows, also when mnRekord is in the background.</p>
+<table>
+  <tr><th>Action</th><th>Default</th></tr>
+  <tr><td>Record, pause and resume</td><td><kbd>F9</kbd></td></tr>
+  <tr><td>Stop</td><td><kbd>F10</kbd></td></tr>
+  <tr><td>Add marker</td><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td></tr>
+</table>
+<p>To change one, open Preferences → Shortcuts, click the shortcut and press the new key or combination (a function key, a letter or a digit, with <kbd>Ctrl</kbd>, <kbd>Alt</kbd> or <kbd>Shift</kbd> if you like). <b>Restore defaults</b> brings back the three above. If another program already owns a shortcut, mnRekord tells you that it could not assign it.</p>
+
+<h2 id="tray">Tray icon</h2>
+<p>While mnRekord runs there is a coral icon in the notification area of the taskbar (it may be in the “hidden icons” group). A left click brings the window back. The right-click menu has:</p>
+<ul>
+  <li><b>Show mnRekord</b> – brings the window to the front;</li>
+  <li><b>Start recording</b> / <b>Stop recording</b> – the entry changes with the state;</li>
+  <li><b>Quit</b>.</li>
+</ul>
+
+<h2 id="cli">Command line</h2>
+<p>A second start of <code>mnrekord.exe</code> does not open a second window. It hands its arguments to the running copy and exits. If no copy runs, the arguments are executed by the copy that starts. Commands can be written with <code>/</code>, <code>-</code> or <code>--</code> in front, or without, and are not case sensitive; several commands can be given at once.</p>
+<pre><code>mnrekord setoutputpath "D:\Videos" setscreenframerate 60 record
+mnrekord stop</code></pre>
+<table>
+  <tr><th>Command</th><th>Effect</th></tr>
+  <tr><td><code>record</code></td><td>Starts a recording (with the countdown).</td></tr>
+  <tr><td><code>pause</code>, <code>resume</code></td><td>Pause or continue the running recording.</td></tr>
+  <tr><td><code>stop</code></td><td>Stops and saves, as the Stop button does.</td></tr>
+  <tr><td><code>writetofile</code></td><td>Stops, saves with an automatic name without asking, and quits.</td></tr>
+  <tr><td><code>drawregion</code></td><td>Starts “Draw on screen”.</td></tr>
+  <tr><td><code>setregion X Y W H</code></td><td>Sets the region in screen pixels.</td></tr>
+  <tr><td><code>followwindow "text"</code></td><td>Selects the first visible window whose title contains the text, records it and follows it.</td></tr>
+  <tr><td><code>setscreenframerate N</code></td><td>15, 24, 30 or 60.</td></tr>
+  <tr><td><code>setoutputpath "folder"</code></td><td>Sets the output folder.</td></tr>
+  <tr><td><code>enablescreenrecording</code>, <code>disablescreenrecording</code></td><td>Switch the Screen card on or off.</td></tr>
+  <tr><td><code>unmutesystemaudio</code>, <code>mutesystemaudio</code></td><td>Switch System audio on or off.</td></tr>
+</table>
+<p>One more mode does not use the running copy:</p>
+<pre><code>mnrekord --gif recording.mp4 recording.gif</code></pre>
+<p>It converts a recording to a GIF and exits. The result is a text file <code>recording.gif.log</code> that says <code>ok</code> or what went wrong.</p>
+<div class="note"><b>Note</b><code>setoutputpath</code>, <code>setregion</code>, <code>setscreenframerate</code> and the other setting commands are saved in the settings, like changes made in the window.</div>
+
+<h2 id="recovery">Recovering a recording</h2>
+<p>A recording is written to the temporary folder while it runs. If mnRekord is closed in an unusual way (a crash, a power cut, the process killed), the next start shows <b>Recover recording</b>:</p>
+<ul>
+  <li><b>Recover</b> asks where to save the file and keeps what was recorded, up to the last written fragment (a few seconds before the end may be lost);</li>
+  <li><b>Delete</b> throws it away.</li>
+</ul>
+<p>Until you decide, the unfinished recording stays in the temporary folder, in a folder named <code>trecRec…</code>.</p>
+
+<h2 id="trouble">Troubleshooting</h2>
+<table>
+  <tr><th>Problem</th><th>What to try</th></tr>
+  <tr><td>The Record button is grey, or “Turn on the screen to record”</td><td>Switch on the <b>Screen</b> card. mnRekord needs the screen; audio alone is not recorded.</td></tr>
+  <tr><td>“Unable to record system audio”</td><td>Connect or enable a playback device in Windows sound settings, then switch System audio on again.</td></tr>
+  <tr><td>A window is black in the video</td><td>Some programs (protected video, some games in exclusive full screen) do not allow screen capture. Run the game in windowed or borderless mode.</td></tr>
+  <tr><td>The Windows sign-in or permission (UAC) screen is not recorded</td><td>That is by design in Windows; it is a protected desktop.</td></tr>
+  <tr><td>“Not Enough Space On Disk”</td><td>Free some space or choose another temporary folder (Preferences → Files). The recording up to that point is saved.</td></tr>
+  <tr><td>The video stutters on a slow computer</td><td>Lower the frame rate or the size, and leave “Use the graphics card to encode” on. Closing programs that use the GPU helps.</td></tr>
+  <tr><td>A shortcut does nothing</td><td>Another program may own it. Pick a different key in Preferences → Shortcuts.</td></tr>
+  <tr><td>The recorder itself appears in the video</td><td>Check that “Do not capture recorder on screen” is on.</td></tr>
+  <tr><td>The size changed to something I did not choose</td><td>With a locked ratio the frame always keeps the ratio. Choose <b>Free</b> in the Ratio list to resize without it.</td></tr>
+</table>
+
+<h2 id="tech">Technical notes</h2>
+<ul>
+  <li><b>Capture:</b> the Windows Desktop Duplication API (DXGI), one duplication per monitor that the region touches; GDI is the fallback. The region is copied at the chosen frame rate; the pointer is drawn on top. Every coordinate is in physical pixels.</li>
+  <li><b>Video:</b> frames are converted to NV12 (BT.709, limited range) and encoded with the Media Foundation H.264 encoder, in quality-based rate control. The hardware encoder is used when available.</li>
+  <li><b>Audio:</b> the system sound is captured with WASAPI loopback (48 kHz, stereo) and encoded to AAC at 160 kbit/s. Audio and video follow the same recording clock, so pauses and silence do not shift them against each other.</li>
+  <li><b>Files:</b> fragmented MP4, written by the Media Foundation sink writer.</li>
+  <li><b>Settings:</b> <code>%APPDATA%\mnRekord\settings.json</code>. Delete the file to go back to the defaults.</li>
+  <li><b>One copy:</b> a named mutex keeps one running copy; commands go to it over the named pipe <code>\\.\pipe\mnRekord</code>.</li>
+</ul>
+
+<h2 id="build">Building from source</h2>
+<p>You need Windows 10 or newer and a current stable <a href="https://rustup.rs">Rust</a> toolchain.</p>
+<pre><code>git clone https://github.com/miklosnemeth/mnRekord
+cd mnRekord
+cargo test --release
+cargo build --release</code></pre>
+<p>The program is <code>target\release\mnrekord.exe</code>. To make the installer, install <a href="https://jrsoftware.org/isinfo.php">Inno Setup 6</a> and run <code>installer\build.ps1</code>; the result is <code>dist\mnRekord-&lt;version&gt;-setup.exe</code>.</p>
+<p>mnRekord is written in Rust with <a href="https://github.com/emilk/egui">egui</a> and the <code>windows</code> crate. It is released under the MIT license.</p>
+
+</main>
+</div>
+</div>
+
+<footer class="no-print">
+  <div class="wrap">
+    <span>mnRekord 0.2.0 · MIT license</span>
+    <span><a href="index.html">Home</a> · <a href="mnRekord-manual.pdf">Manual as PDF</a> · <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

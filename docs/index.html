@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mnRekord – a simple screen recorder for Windows</title>
+<meta name="description" content="mnRekord records a region, a monitor or a window with system audio and saves MP4. Aspect ratio lock, window follow, GIF export. Free, MIT license.">
+<link rel="icon" href="img/icon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="index.html"><img src="img/icon.png" alt="">mnRekord</a>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#how">How it works</a>
+      <a href="manual.html">Manual</a>
+      <a href="mnRekord-manual.pdf">PDF</a>
+      <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="hero wrap">
+  <h1>Record your screen.<br><span>Nothing in the way.</span></h1>
+  <p class="lead">mnRekord is a small, dark screen recorder for Windows. Pick a region, a monitor or a window, press <kbd>F9</kbd>, and get an MP4 with the sound of your computer.</p>
+  <div class="cta">
+    <a class="btn primary" href="https://github.com/miklosnemeth/mnRekord/releases/latest">Download for Windows</a>
+    <a class="btn" href="manual.html">Read the manual</a>
+  </div>
+  <div class="shot"><img src="img/main.png" alt="The mnRekord window: sources on the left, the stage with the recording frame on the right"></div>
+</section>
+
+<section class="block" id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="sub">The things you need to make a tutorial, a bug report or a quick clip, and little else.</p>
+    <div class="grid">
+      <div class="card"><span class="tag">Capture</span><h3>Region, monitor or window</h3><p>Drag a frame on a live preview of your desktop, click a window, or draw a rectangle right on the screen with a magnifier.</p></div>
+      <div class="card"><span class="tag">Capture</span><h3>Aspect ratio lock</h3><p>16:9 or 9:16, with ready sizes from 360p to 4K UHD. Handles keep the ratio and never get stuck.</p></div>
+      <div class="card"><span class="tag">Capture</span><h3>Follow a window</h3><p>Move the window while you record and the picture stays on it.</p></div>
+      <div class="card"><span class="tag">Sound</span><h3>System audio</h3><p>Records what you hear, as AAC, in step with the picture, with a level meter.</p></div>
+      <div class="card"><span class="tag">Video</span><h3>H.264 with a quality slider</h3><p>Quality from 1 to 100, 15 to 60 fps, GPU encoding when available. Plays everywhere.</p></div>
+      <div class="card"><span class="tag">Video</span><h3>Pointer highlight</h3><p>A soft halo around the pointer and a ring on clicks, so viewers can follow you.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>Pause, markers, parts</h3><p>Pause and resume, drop markers into a text file, and split long recordings into parts.</p></div>
+      <div class="card"><span class="tag">Workflow</span><h3>GIF in one click</h3><p>Turn the last recording into an animated GIF.</p></div>
+      <div class="card"><span class="tag">Safety</span><h3>Crash recovery</h3><p>The file is written in fragments. After a crash, mnRekord offers to keep what was recorded.</p></div>
+      <div class="card"><span class="tag">Control</span><h3>Shortcuts, tray, command line</h3><p>Global shortcuts, a tray icon with a menu, and commands you can script.</p></div>
+      <div class="card"><span class="tag">Size</span><h3>One small file</h3><p>A single exe of about 7 MB, written in Rust. No account, no cloud, no ads.</p></div>
+      <div class="card"><span class="tag">Open</span><h3>MIT license</h3><p>Free to use and to change. The source is on GitHub.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="how">
+  <div class="wrap">
+    <h2>How it works</h2>
+    <p class="sub">From start to saved video in a few clicks.</p>
+    <div class="two">
+      <ol class="steps">
+        <li><b>Choose what to record.</b> Drag the frame, click <i>Screen 1</i>, or use <i>Draw on screen</i> to click a window.</li>
+        <li><b>Pick a size.</b> Set the ratio (16:9, 9:16 or free) and a size such as <i>FHD</i>.</li>
+        <li><b>Record.</b> Press <kbd>F9</kbd>. After a 3-2-1 countdown a slim bar replaces the window.</li>
+        <li><b>Stop.</b> Press <kbd>F10</kbd>. The MP4 is saved and opens in your player.</li>
+      </ol>
+      <div class="shot"><img src="img/bar.png" alt="The recording bar with the timer, Pause, Stop, Marker and Restart"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block">
+  <div class="wrap">
+    <h2>Set it up your way</h2>
+    <p class="sub">Frame rate, quality, file names, shortcuts and folders are in the preferences.</p>
+    <div class="two">
+      <div class="shot"><img src="img/prefs1.png" alt="Preferences: frame rate, quality, split files, GPU encoding"></div>
+      <div class="shot"><img src="img/prefs3.png" alt="Preferences: shortcuts"></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="download">
+  <div class="wrap">
+    <h2>Get it</h2>
+    <p class="sub">Windows 10 or 11, 64-bit. Download the installer, or the single exe, from the latest release.</p>
+    <div class="cta" style="display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn primary" href="https://github.com/miklosnemeth/mnRekord/releases/latest">Latest release</a>
+      <a class="btn" href="mnRekord-manual.pdf">Manual (PDF)</a>
+      <a class="btn" href="https://github.com/miklosnemeth/mnRekord">Source code</a>
+    </div>
+    <p class="sub" style="margin-top:22px">Build it yourself:</p>
+    <pre><code>git clone https://github.com/miklosnemeth/mnRekord
+cd mnRekord
+cargo build --release</code></pre>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>mnRekord 0.2.0 · MIT license · © 2026 Miklós Németh</span>
+    <span><a href="manual.html">Manual</a> · <a href="mnRekord-manual.pdf">PDF</a> · <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a></span>
+  </div>
+</footer>
+
+</body>
+</html>

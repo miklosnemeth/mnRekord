@@ -170,8 +170,9 @@ impl App {
             prompt: None,
             border: None,
             grip: None,
-            prefs_open: opts.view == "prefs",
-            prefs_tab: 0,
+            prefs_open: opts.view.starts_with("prefs"),
+            // `--view prefs2` opens the third tab (for screenshots).
+            prefs_tab: opts.view.strip_prefix("prefs").and_then(|n| n.parse().ok()).unwrap_or(0),
             capture_key: None,
             shortcut_msg: None,
             notice: None,
