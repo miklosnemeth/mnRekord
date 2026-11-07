@@ -1,6 +1,6 @@
 [package]
 name = "mnrekord"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "A simple Windows screen recorder: region capture with locked aspect ratio, system audio, H.264/AAC MP4 output."
 readme = "README.md"
