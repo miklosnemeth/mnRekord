@@ -261,11 +261,13 @@ impl App {
             return;
         }
         let (stop, latest): (Arc<AtomicBool>, Arc<Mutex<_>>) = Default::default();
-        let (st, la, vs, h) = (stop.clone(), latest.clone(), self.vscreen, self.hwnd);
+        let (st, la, vs, h, ctx) = (stop.clone(), latest.clone(), self.vscreen, self.hwnd, self.ctx.clone());
         std::thread::spawn(move || {
-            let w = 640.min(vs.w).max(1);
+            let w = 960.min(vs.w).max(1);
             let hh = ((w as f64 * vs.h as f64 / vs.w.max(1) as f64) as i32).max(1);
+            let frame = Duration::from_millis(33); // about 30 fps
             while !st.load(Ordering::Relaxed) {
+                let t0 = Instant::now();
                 if let Some(mut px) = win::grab_rgba(vs, w, hh) {
                     // Paint over our own window so the preview doesn't show itself.
                     let own = win::window_rect(h);
@@ -281,8 +283,9 @@ impl App {
                         }
                     }
                     *la.lock().unwrap() = Some((px, w as usize, hh as usize));
+                    ctx.request_repaint();
                 }
-                std::thread::sleep(Duration::from_millis(500));
+                std::thread::sleep(frame.saturating_sub(t0.elapsed()));
             }
         });
         self.preview = Some(Preview { stop, latest, tex: None });

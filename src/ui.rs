@@ -175,7 +175,6 @@ impl App {
             return;
         }
         self.draw_top(ui);
-        self.draw_dock(ui);
         self.draw_sources(ui);
         self.draw_stage(ui);
         self.draw_prefs(ui);
@@ -203,41 +202,26 @@ impl App {
         });
     }
 
-    fn draw_dock(&mut self, ui: &mut egui::Ui) {
-        egui::Panel::bottom("dock").exact_size(84.0).frame(egui::Frame::new().fill(PAPER).inner_margin(egui::Margin::symmetric(18, 14))).show_separator_line(false).show(ui, |ui| {
-            ui.horizontal_centered(|ui| {
-                let can = self.can_start();
-                let label = RichText::new(format!("●  Record   {}", self.settings.shortcut_record.label())).font(bold(16.0)).color(Color32::WHITE);
-                let btn = egui::Button::new(label).fill(if can { CORAL } else { OFF }).corner_radius(5).min_size(egui::vec2(220.0, 52.0));
-                if ui.add_enabled(can, btn).clicked() {
-                    self.start_recording();
+    fn record_button(&mut self, ui: &mut egui::Ui) {
+        let can = self.can_start();
+        let label = RichText::new(format!("●  Record   {}", self.settings.shortcut_record.label())).font(bold(16.0)).color(Color32::WHITE);
+        let btn = egui::Button::new(label).fill(if can { CORAL } else { OFF }).corner_radius(5);
+        let size = egui::vec2(ui.available_width(), 46.0);
+        if ui.add_enabled(can, |ui: &mut egui::Ui| ui.add_sized(size, btn)).clicked() {
+            self.start_recording();
+        }
+        if let Some(p) = self.last_saved.clone() {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new("Last recording").small().color(MUTED));
+                let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+                if ui.link(RichText::new(name).small()).clicked() {
+                    win::show_in_folder(&p);
                 }
-                ui.add_space(12.0);
-                ui.vertical(|ui| {
-                    ui.add_space(4.0);
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Saves to").small().color(MUTED));
-                        if ui.link(RichText::new(short_path(&self.settings.output_folder)).small()).on_hover_text(&self.settings.output_folder).clicked() {
-                            let dir = std::path::PathBuf::from(&self.settings.output_folder);
-                            let _ = std::fs::create_dir_all(&dir);
-                            win::open_path(&dir);
-                        }
-                    });
-                    if let Some(p) = self.last_saved.clone() {
-                        ui.horizontal(|ui| {
-                            ui.label(RichText::new("Last recording").small().color(MUTED));
-                            let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
-                            if ui.link(RichText::new(name).small()).clicked() {
-                                win::show_in_folder(&p);
-                            }
-                        });
-                    }
-                    if let Some(n) = &self.notice {
-                        ui.label(RichText::new(n).small().color(CORAL));
-                    }
-                });
             });
-        });
+        }
+        if let Some(n) = &self.notice {
+            ui.label(RichText::new(n).small().color(CORAL));
+        }
     }
 
     fn draw_sources(&mut self, ui: &mut egui::Ui) {
@@ -250,6 +234,7 @@ impl App {
                     ui.set_width(ui.available_width());
                     self.stage_controls(ui);
                 });
+                self.record_button(ui);
             });
         });
     }
@@ -953,15 +938,6 @@ fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String) {
             }
         }
     });
-}
-
-fn short_path(p: &str) -> String {
-    let parts: Vec<&str> = p.split(['\\', '/']).filter(|s| !s.is_empty()).collect();
-    if parts.len() > 2 {
-        format!("...\\{}\\{}", parts[parts.len() - 2], parts[parts.len() - 1])
-    } else {
-        p.to_string()
-    }
 }
 
 /// A calm stand-in picture for screenshots, so they never show the real desktop.

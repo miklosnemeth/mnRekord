@@ -144,7 +144,7 @@ pub fn grab_rgba(src: Rect, out_w: i32, out_h: i32) -> Option<Vec<u8>> {
         let mut bits = std::ptr::null_mut();
         let dib = CreateDIBSection(Some(mem), &bmi, DIB_RGB_COLORS, &mut bits, None, 0).ok()?;
         let old = SelectObject(mem, dib.into());
-        let _ = SetStretchBltMode(mem, HALFTONE);
+        let _ = SetStretchBltMode(mem, COLORONCOLOR); // fast; the preview refreshes many times a second
         let ok = StretchBlt(mem, 0, 0, out_w, out_h, Some(screen), src.x, src.y, src.w, src.h, SRCCOPY).as_bool();
         let mut out = None;
         if ok {
