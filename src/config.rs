@@ -3,15 +3,15 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub const APP_NAME: &str = "mnRekord";
-pub const SCREEN_RATES: [u32; 2] = [30, 60];
+pub const SCREEN_RATES: [u32; 4] = [15, 24, 30, 60];
 pub const MIN_REGION: i32 = 16;
 pub const COUNT_START: i32 = 3;
 pub const COUNT_DELAY: f32 = 0.5;
 pub const COUNT_STEP: f32 = 1.0;
-pub const VIDEO_BPP_STANDARD: f64 = 0.1;
-pub const VIDEO_BPP_HIGH: f64 = 0.25;
+/// Nominal bits per pixel and frame announced to the encoder; the quality setting decides the real rate.
+pub const VIDEO_BPP: f64 = 0.1;
 pub const AUDIO_BYTES_PER_SEC: u32 = 20_000; // 160 kbit/s
-pub const H264_QUALITY: i32 = 75;
+pub const DEFAULT_QUALITY: u32 = 75;
 pub const BORDER_PX: i32 = 3;
 pub const LOW_DISK_BYTES: u64 = 0x12c0_0000; // 300 MiB
 pub const MAGNIFIER_ZOOM: f32 = 5.0; // 100 px view of 20 px
@@ -20,20 +20,15 @@ pub const MAGNIFIER_SIZE: f32 = 100.0;
 /// (name, long side) of the sizes offered when the ratio is locked to 16:9 or 9:16.
 pub const SIZE_TIERS: [(&str, i32); 5] = [("360p", 640), ("HD", 1280), ("FHD", 1920), ("QHD", 2560), ("4K UHD", 3840)];
 
-/// (group, name, width, height)
-pub const PRESETS: [(&str, &str, i32, i32); 12] = [
-    ("Wide", "AD", 600, 315),
-    ("Wide", "SD", 640, 480),
-    ("Wide", "HD", 1280, 720),
-    ("Wide", "FHD", 1920, 1080),
-    ("Wide", "2K", 2048, 1080),
-    ("Wide", "QHD", 2560, 1440),
-    ("Wide", "4K UHD", 3840, 2160),
-    ("Square", "Small", 600, 600),
-    ("Square", "Large", 1080, 1080),
-    ("Tall", "Small", 600, 750),
-    ("Tall", "Large", 1080, 1350),
-    ("Tall", "FHD", 1080, 1920),
+/// (name, width, height) of the sizes offered for a free ratio.
+pub const PRESETS: [(&str, i32, i32); 7] = [
+    ("AD", 600, 315),
+    ("SD", 640, 480),
+    ("HD", 1280, 720),
+    ("FHD", 1920, 1080),
+    ("2K", 2048, 1080),
+    ("QHD", 2560, 1440),
+    ("4K UHD", 3840, 2160),
 ];
 
 #[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug, Default)]
@@ -128,12 +123,6 @@ impl Shortcut {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Debug)]
-pub enum Encoder {
-    Standard,
-    High,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct Settings {
@@ -151,7 +140,8 @@ pub struct Settings {
     pub shortcut_stop: Shortcut,
     pub shortcut_marker: Shortcut,
     pub max_fps: u32,
-    pub encoder: Encoder,
+    /// H.264 quality 1..100 for the encoder's quality-based rate control.
+    pub video_quality: u32,
     pub record_screen: bool,
     pub record_system: bool,
     pub region: Option<Rect>,
@@ -178,7 +168,7 @@ impl Default for Settings {
             shortcut_stop: Shortcut::plain("F10"),
             shortcut_marker: Shortcut::ctrl("M"),
             max_fps: 30,
-            encoder: Encoder::Standard,
+            video_quality: DEFAULT_QUALITY,
             record_screen: true,
             record_system: true,
             region: None,

@@ -150,7 +150,7 @@ pub fn grab_rgba(src: Rect, out_w: i32, out_h: i32) -> Option<Vec<u8>> {
         if ok {
             let n = (out_w * out_h * 4) as usize;
             let mut px = std::slice::from_raw_parts(bits as *const u8, n).to_vec();
-            for p in px.chunks_exact_mut(4) {
+            for p in px.as_chunks_mut::<4>().0 {
                 p.swap(0, 2);
                 p[3] = 255;
             }

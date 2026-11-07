@@ -1,6 +1,6 @@
 //! One recording: a pausable clock, capture threads, the audio mixer and the writers.
 use crate::audio::AudioSource;
-use crate::config::{Encoder, Rect, LOW_DISK_BYTES, VIDEO_BPP_HIGH, VIDEO_BPP_STANDARD};
+use crate::config::{Rect, LOW_DISK_BYTES, VIDEO_BPP};
 use crate::encode::*;
 use crate::screen::ScreenGrabber;
 use crate::win;
@@ -91,7 +91,7 @@ pub struct SessionConfig {
     pub temp_dir: PathBuf,
     pub region: Option<Rect>,
     pub fps: u32,
-    pub encoder: Encoder,
+    pub quality: u32,
     pub system: Option<Arc<AudioSource>>,
     pub restore_cursor: bool,
 }
@@ -111,7 +111,7 @@ impl Session {
         shared.restore_cursor.store(cfg.restore_cursor, Ordering::Relaxed);
         shared.screen_on.store(cfg.region.is_some(), Ordering::Relaxed);
         std::fs::create_dir_all(&cfg.temp_dir).map_err(|e| format!("Failed to Set Temporary Folder to Write ({e})"))?;
-        let bpp = if cfg.encoder == Encoder::High { VIDEO_BPP_HIGH } else { VIDEO_BPP_STANDARD };
+        let bpp = VIDEO_BPP;
         let has_audio = cfg.system.is_some();
         let mut threads = Vec::new();
         let mut writers = Vec::new();
@@ -119,7 +119,7 @@ impl Session {
 
         if let Some(region) = cfg.region {
             let region = region.even();
-            let spec = VideoSpec { width: region.w as u32, height: region.h as u32, fps: cfg.fps, bits_per_pixel: bpp };
+            let spec = VideoSpec { width: region.w as u32, height: region.h as u32, fps: cfg.fps, bits_per_pixel: bpp, quality: cfg.quality };
             let w = Writer::spawn(&cfg.temp_dir.join(MAIN_FILE), spec, has_audio)?;
             audio_tx = Some(w.tx.clone());
             let (tx, sh, fps) = (w.tx.clone(), shared.clone(), cfg.fps);

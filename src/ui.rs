@@ -421,7 +421,7 @@ impl App {
         let sizes: Vec<(&str, i32, i32)> = match self.settings.aspect {
             Some((16, 9)) => SIZE_TIERS.iter().map(|&(n, w)| (n, w, w * 9 / 16)).collect(),
             Some((9, 16)) => SIZE_TIERS.iter().map(|&(n, w)| (n, w * 9 / 16, w)).collect(),
-            _ => PRESETS.iter().filter(|p| p.0 == "Wide").map(|&(_, n, w, h)| (n, w, h)).collect(),
+            _ => PRESETS.to_vec(),
         };
         ui.horizontal(|ui| {
             ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Ratio").small().color(MUTED)));
@@ -539,9 +539,8 @@ impl App {
             }
         });
         ui.horizontal(|ui| {
-            ui.label("Encoder");
-            ui.selectable_value(&mut self.settings.encoder, Encoder::Standard, "Standard");
-            ui.selectable_value(&mut self.settings.encoder, Encoder::High, "High detail");
+            ui.label("Quality");
+            ui.add(egui::Slider::new(&mut self.settings.video_quality, 1..=100));
         });
     }
 
@@ -888,7 +887,10 @@ fn locked_box(anchor: (i32, i32), (east, south): (bool, bool), raw: (f64, f64), 
     let w = raw.0.max(raw.1 * ratio).clamp(min_w, max_w);
     let h = w / ratio;
     let (w, h) = (w.round() as i32, h.round() as i32);
-    Rect::new(if east { anchor.0 } else { anchor.0 - w }, if south { anchor.1 } else { anchor.1 - h }, w, h)
+    let x = if east { anchor.0 } else { anchor.0 - w };
+    let y = if south { anchor.1 } else { anchor.1 - h };
+    // Next to the screen border there may be less room than the minimum size: shift the frame inside.
+    Rect::new(x.clamp(vs.x, (vs.right() - w).max(vs.x)), y.clamp(vs.y, (vs.bottom() - h).max(vs.y)), w, h)
 }
 
 /// `drag_region` with a locked ratio: corners grow from the opposite corner, edges around the middle.
@@ -951,4 +953,142 @@ fn demo_picture() -> egui::ColorImage {
         }
     }
     egui::ColorImage::from_rgba_unmultiplied([w, h], &px)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const GRIPS: [Grip; 8] = [Grip::N, Grip::S, Grip::E, Grip::W, Grip::NE, Grip::NW, Grip::SE, Grip::SW];
+    const RATIOS: [(i32, i32); 2] = [(16, 9), (9, 16)];
+
+    fn screens() -> Vec<Rect> {
+        vec![Rect::new(0, 0, 1920, 1080), Rect::new(-1920, 0, 4480, 1080), Rect::new(0, 0, 2560, 1440)]
+    }
+
+    fn ratio_ok(r: &Rect, a: (i32, i32)) {
+        // Rounding to whole pixels may be off by one.
+        let off = (r.w * a.1 - r.h * a.0).abs();
+        assert!(off <= a.0.max(a.1) * 2, "{r:?} is not {a:?}");
+    }
+
+    fn inside(r: &Rect, vs: &Rect) {
+        assert!(r.x >= vs.x && r.y >= vs.y && r.right() <= vs.right() && r.bottom() <= vs.bottom(), "{r:?} leaves {vs:?}");
+    }
+
+    #[test]
+    fn fit_ratio_is_centred_and_inside() {
+        for vs in screens() {
+            for a in RATIOS {
+                let r = vs.fit_ratio(a.0, a.1);
+                ratio_ok(&r, a);
+                inside(&r, &vs);
+                assert!((r.x - vs.x - (vs.right() - r.right())).abs() <= 1);
+                assert!((r.y - vs.y - (vs.bottom() - r.bottom())).abs() <= 1);
+            }
+        }
+    }
+
+    #[test]
+    fn fit_ratio_keeps_a_frame_that_already_fits() {
+        let r = Rect::new(100, 50, 1280, 720);
+        assert_eq!(r.fit_ratio(16, 9), r);
+    }
+
+    #[test]
+    fn locked_box_keeps_ratio_and_stays_inside() {
+        let vs = Rect::new(0, 0, 1920, 1080);
+        for a in RATIOS {
+            for anchor in [(0, 0), (960, 540), (1900, 1070), (10, 1000)] {
+                for east in [false, true] {
+                    for south in [false, true] {
+                        for raw in [(0.0, 0.0), (5.0, 500.0), (3000.0, 3000.0), (400.0, 20.0)] {
+                            let r = locked_box(anchor, (east, south), raw, &vs, a);
+                            ratio_ok(&r, a);
+                            inside(&r, &vs);
+                            assert!(r.w >= MIN_REGION && r.h >= MIN_REGION || r.w.max(r.h) >= MIN_REGION, "{r:?}");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn every_grip_stays_inside_with_the_ratio() {
+        for vs in screens() {
+            for a in RATIOS {
+                let starts = [vs.fit_ratio(a.0, a.1), Rect::new(vs.x + 100, vs.y + 100, 640 * a.0 / a.1.max(1) / 2 * 2, 360), vs.fit_ratio(a.0, a.1).clamped(&vs)];
+                for s in starts {
+                    let s = locked_box((s.x, s.y), (true, true), (s.w as f64, s.h as f64), &vs, a);
+                    for g in GRIPS {
+                        for (dx, dy) in [(-700, 0), (0, -700), (700, 0), (0, 700), (-3000, -3000), (3000, 3000), (50, -40)] {
+                            let r = drag_region_locked(s, g, dx, dy, &vs, a);
+                            ratio_ok(&r, a);
+                            inside(&r, &vs);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn move_keeps_the_size_and_stays_inside() {
+        let vs = Rect::new(0, 0, 1920, 1080);
+        let s = Rect::new(100, 100, 640, 360);
+        let r = drag_region_locked(s, Grip::Move, 5000, 5000, &vs, (16, 9));
+        assert_eq!((r.w, r.h), (640, 360));
+        inside(&r, &vs);
+    }
+
+    #[test]
+    fn corner_follows_either_axis_alone() {
+        let vs = Rect::new(0, 0, 1920, 1080);
+        let s = Rect::new(400, 300, 640, 360);
+        for g in [Grip::NE, Grip::NW, Grip::SE, Grip::SW] {
+            let (sx, sy) = (if matches!(g, Grip::NE | Grip::SE) { 1 } else { -1 }, if matches!(g, Grip::SE | Grip::SW) { 1 } else { -1 });
+            let grow_x = drag_region_locked(s, g, 100 * sx, 0, &vs, (16, 9));
+            let grow_y = drag_region_locked(s, g, 0, 100 * sy, &vs, (16, 9));
+            assert!(grow_x.w > s.w, "{g:?} did not grow when moved sideways");
+            assert!(grow_y.w > s.w, "{g:?} did not grow when moved vertically");
+        }
+    }
+
+    #[test]
+    fn edge_grows_around_the_middle() {
+        let vs = Rect::new(0, 0, 1920, 1080);
+        let s = Rect::new(600, 300, 640, 360);
+        let r = drag_region_locked(s, Grip::E, 100, 0, &vs, (16, 9));
+        assert_eq!(r.w, 840);
+        assert_eq!(r.x + r.w / 2, s.x + s.w / 2);
+        let r = drag_region_locked(s, Grip::N, 0, -90, &vs, (16, 9));
+        assert_eq!(r.h, 540);
+        assert_eq!(r.y + r.h / 2, s.y + s.h / 2);
+    }
+
+    #[test]
+    fn edge_shrinks_a_full_screen_frame() {
+        let vs = Rect::new(0, 0, 1920, 1080);
+        for g in [Grip::E, Grip::W, Grip::N, Grip::S] {
+            let (dx, dy) = match g {
+                Grip::E => (-200, 0),
+                Grip::W => (200, 0),
+                Grip::N => (0, 200),
+                _ => (0, -200),
+            };
+            let r = drag_region_locked(vs, g, dx, dy, &vs, (16, 9));
+            assert!(r.w < vs.w, "{g:?} did not shrink the frame");
+        }
+    }
+
+    #[test]
+    fn edge_at_the_screen_border_still_grows() {
+        // The frame touches the left edge; dragging the right edge outward must still work.
+        let vs = Rect::new(0, 0, 1920, 1080);
+        let s = Rect::new(0, 100, 640, 360);
+        let r = drag_region_locked(s, Grip::E, 200, 0, &vs, (16, 9));
+        assert_eq!(r.w, 1040);
+        inside(&r, &vs);
+    }
 }

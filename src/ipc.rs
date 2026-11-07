@@ -25,7 +25,6 @@ pub enum Cmd {
     SetRegion(i32, i32, i32, i32),
     SystemAudio(bool),
     Screen(bool),
-    SetH264,
     DrawRegion,
 }
 
@@ -43,7 +42,6 @@ pub fn parse_args(args: &[String]) -> Vec<Cmd> {
             "resume" => out.push(Cmd::Resume),
             "stop" => out.push(Cmd::Stop),
             "writetofile" => out.push(Cmd::WriteToFile),
-            "setrecordtoh264" => out.push(Cmd::SetH264),
             "drawregion" => out.push(Cmd::DrawRegion),
             "unmutesystemaudio" => out.push(Cmd::SystemAudio(true)),
             "mutesystemaudio" => out.push(Cmd::SystemAudio(false)),

@@ -7,7 +7,7 @@ A small Windows screen recorder written in Rust with [egui](https://github.com/e
 - Record a screen region, a whole monitor or a window, chosen on a stage or drawn directly on the desktop
 - Aspect ratio lock (16:9, 9:16 or free) with size presets (360p, HD, FHD, QHD, 4K UHD)
 - System audio (loopback) with a level meter
-- H.264 + AAC in MP4 (Media Foundation), standard or high detail encoder, 30 or 60 fps
+- H.264 + AAC in MP4 (Media Foundation) with a quality setting, 15, 24, 30 or 60 fps
 - Pause, resume, markers, countdown, global shortcuts (F9 record, F10 stop, Ctrl+M marker)
 - Dark UI
 

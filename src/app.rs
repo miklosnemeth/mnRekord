@@ -54,7 +54,7 @@ pub enum Prompt {
     Recover(PathBuf),
 }
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Grip {
     Move,
     N,
@@ -67,9 +67,14 @@ pub enum Grip {
     SW,
 }
 
+/// Pixels (RGBA), width, height.
+type PreviewFrame = (Vec<u8>, usize, usize);
+
 pub struct Preview {
     pub stop: Arc<AtomicBool>,
-    pub latest: Arc<Mutex<Option<(Vec<u8>, usize, usize)>>>,
+    pub latest: Arc<Mutex<Option<PreviewFrame>>>,
+    /// Set while the window is minimized: the capture thread idles.
+    pub paused: Arc<AtomicBool>,
     pub tex: Option<egui::TextureHandle>,
 }
 
@@ -92,6 +97,8 @@ pub struct App {
     pub hot: Arc<HotState>,
     pub system: Option<Arc<AudioSource>>,
     pub preview: Option<Preview>,
+    /// The window title last sent, so it is only set when it changes.
+    pub cur_title: String,
     pub demo_tex: Option<egui::TextureHandle>,
     pub mode: Mode,
     pub rec: Option<Rec>,
@@ -145,6 +152,7 @@ impl App {
             hot,
             system: None,
             preview: None,
+            cur_title: String::new(),
             demo_tex: None,
             mode: Mode::Idle,
             rec: None,
@@ -260,13 +268,18 @@ impl App {
         if self.demo || self.preview.is_some() {
             return;
         }
-        let (stop, latest): (Arc<AtomicBool>, Arc<Mutex<_>>) = Default::default();
+        let (stop, latest, paused): (Arc<AtomicBool>, Arc<Mutex<_>>, Arc<AtomicBool>) = Default::default();
+        let pa = paused.clone();
         let (st, la, vs, h, ctx) = (stop.clone(), latest.clone(), self.vscreen, self.hwnd, self.ctx.clone());
         std::thread::spawn(move || {
             let w = 960.min(vs.w).max(1);
             let hh = ((w as f64 * vs.h as f64 / vs.w.max(1) as f64) as i32).max(1);
             let frame = Duration::from_millis(33); // about 30 fps
             while !st.load(Ordering::Relaxed) {
+                if pa.load(Ordering::Relaxed) {
+                    std::thread::sleep(Duration::from_millis(200));
+                    continue;
+                }
                 let t0 = Instant::now();
                 if let Some(mut px) = win::grab_rgba(vs, w, hh) {
                     // Paint over our own window so the preview doesn't show itself.
@@ -288,7 +301,7 @@ impl App {
                 std::thread::sleep(frame.saturating_sub(t0.elapsed()));
             }
         });
-        self.preview = Some(Preview { stop, latest, tex: None });
+        self.preview = Some(Preview { stop, latest, paused, tex: None });
     }
 
     pub fn stop_preview(&mut self) {
@@ -298,7 +311,9 @@ impl App {
     }
 
     fn update_preview_texture(&mut self) {
+        let minimized = self.ctx.input(|i| i.viewport().minimized.unwrap_or(false));
         let Some(p) = &mut self.preview else { return };
+        p.paused.store(minimized, Ordering::Relaxed);
         let Some((px, w, h)) = p.latest.lock().unwrap().take() else { return };
         let img = egui::ColorImage::from_rgba_unmultiplied([w, h], &px);
         match &mut p.tex {
@@ -394,7 +409,7 @@ impl App {
             temp_dir: temp_dir.clone(),
             region: self.settings.record_screen.then(|| self.region()),
             fps: self.settings.max_fps,
-            encoder: self.settings.encoder,
+            quality: self.settings.video_quality,
             system: self.system.clone(),
             restore_cursor: self.settings.restore_cursor,
         };
@@ -589,7 +604,6 @@ impl App {
             Cmd::SetRegion(x, y, w, h) => self.set_region(Rect::new(x, y, w, h)),
             Cmd::SystemAudio(on) => self.set_system_audio(on),
             Cmd::Screen(on) => self.settings.record_screen = on,
-            Cmd::SetH264 => self.settings.encoder = Encoder::Standard,
             Cmd::DrawRegion => {
                 if self.rec.is_none() && matches!(self.mode, Mode::Idle) {
                     self.begin_pick();
@@ -669,6 +683,7 @@ impl App {
         }
         self.update_preview_texture();
         self.tick_recording();
+        self.sync_title(ctx);
 
         // Closing while recording: pause and ask, as the original does.
         if ctx.input(|i| i.viewport().close_requested()) && self.rec.is_some() && self.prompt.is_none() {
@@ -681,6 +696,19 @@ impl App {
             ctx.request_repaint();
         } else {
             ctx.request_repaint_after(Duration::from_millis(if self.rec.is_some() { 100 } else { 50 }));
+        }
+    }
+
+    /// The title shows the recording state, so the taskbar tells it even when the window is minimized.
+    fn sync_title(&mut self, ctx: &egui::Context) {
+        let title = match &self.rec {
+            Some(r) if r.session.shared.clock.running() => format!("● {}  {APP_NAME}", r.timer_text),
+            Some(r) => format!("Paused {}  {APP_NAME}", r.timer_text),
+            None => APP_NAME.to_string(),
+        };
+        if title != self.cur_title {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.clone()));
+            self.cur_title = title;
         }
     }
 

@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::thread::JoinHandle;
-use windows::core::{Interface, Result as WinResult, GUID, HSTRING};
+use windows::core::{Result as WinResult, HSTRING};
 use windows::Win32::Media::MediaFoundation::*;
 use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
@@ -22,6 +22,8 @@ pub struct VideoSpec {
     pub height: u32,
     pub fps: u32,
     pub bits_per_pixel: f64,
+    /// 1..100, for the encoder's quality-based rate control.
+    pub quality: u32,
 }
 
 pub struct Writer {
@@ -105,27 +107,15 @@ unsafe fn colour_info(t: &IMFMediaType) -> WinResult<()> {
     t.SetUINT32(&MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235.0 as u32)
 }
 
-fn variant_u32(v: u32) -> windows::Win32::System::Variant::VARIANT {
-    use windows::Win32::System::Variant::*;
-    let mut var = VARIANT::default();
-    unsafe {
-        let inner = &mut *var.Anonymous.Anonymous;
-        inner.vt = VT_UI4;
-        inner.Anonymous.ulVal = v;
-    }
-    var
-}
-
-/// Quality-based rate control with the original's default quality (the encoder gets a quality number, not a bitrate).
-/// Best effort: if the encoder refuses, the average bitrate set on the output type still applies.
-unsafe fn set_quality(writer: &IMFSinkWriter, stream: u32) {
-    let mut raw = std::ptr::null_mut();
-    if writer.GetServiceForStream(stream, &GUID::zeroed(), &ICodecAPI::IID, &mut raw).is_err() || raw.is_null() {
-        return;
-    }
-    let api: ICodecAPI = windows::core::Interface::from_raw(raw);
-    let _ = api.SetValue(&CODECAPI_AVEncCommonRateControlMode, &variant_u32(eAVEncCommonRateControlMode_Quality.0 as u32));
-    let _ = api.SetValue(&CODECAPI_AVEncCommonQuality, &variant_u32(crate::config::H264_QUALITY as u32));
+/// Encoding parameters for the video stream: quality-based rate control instead of a fixed bitrate.
+/// They go in with the input type, which is where the sink writer hands them to the encoder.
+unsafe fn quality_params(quality: u32) -> WinResult<IMFAttributes> {
+    let mut params: Option<IMFAttributes> = None;
+    MFCreateAttributes(&mut params, 2)?;
+    let params = params.unwrap();
+    params.SetUINT32(&CODECAPI_AVEncCommonRateControlMode, eAVEncCommonRateControlMode_Quality.0 as u32)?;
+    params.SetUINT32(&CODECAPI_AVEncCommonQuality, quality.clamp(1, 100))?;
+    Ok(params)
 }
 
 unsafe fn open(path: &Path, v: &VideoSpec, audio: bool) -> WinResult<Sink> {
@@ -160,8 +150,8 @@ unsafe fn open(path: &Path, v: &VideoSpec, audio: bool) -> WinResult<Sink> {
     inp.SetUINT64(&MF_MT_PIXEL_ASPECT_RATIO, pack(1, 1))?;
     inp.SetUINT32(&MF_MT_DEFAULT_STRIDE, v.width)?;
     colour_info(&inp)?;
-    writer.SetInputMediaType(video, &inp, None)?;
-    set_quality(&writer, video);
+    let params = quality_params(v.quality)?;
+    writer.SetInputMediaType(video, &inp, &params)?;
 
     let audio = if audio {
         let out = MFCreateMediaType()?;
@@ -211,13 +201,13 @@ pub fn bgra_to_nv12(src: &[u8], stride: usize, w: usize, h: usize, out: &mut Vec
                     let r0 = (top + i * 2) * stride;
                     let a = &src[r0..r0 + w * 4];
                     let b = &src[r0 + stride..r0 + stride + w * 4];
-                    for (d, p) in y_part[i * 2 * w..(i * 2 + 1) * w].iter_mut().zip(a.chunks_exact(4)) {
+                    for (d, p) in y_part[i * 2 * w..(i * 2 + 1) * w].iter_mut().zip(a.as_chunks::<4>().0) {
                         *d = luma(p);
                     }
-                    for (d, p) in y_part[(i * 2 + 1) * w..(i * 2 + 2) * w].iter_mut().zip(b.chunks_exact(4)) {
+                    for (d, p) in y_part[(i * 2 + 1) * w..(i * 2 + 2) * w].iter_mut().zip(b.as_chunks::<4>().0) {
                         *d = luma(p);
                     }
-                    for (x, d) in uv_part[i * w..(i + 1) * w].chunks_exact_mut(2).enumerate() {
+                    for (x, d) in uv_part[i * w..(i + 1) * w].as_chunks_mut::<2>().0.iter_mut().enumerate() {
                         let (o, q) = (x * 8, x * 8 + 4);
                         let bl = (a[o] as i32 + a[q] as i32 + b[o] as i32 + b[q] as i32) >> 2;
                         let gr = (a[o + 1] as i32 + a[q + 1] as i32 + b[o + 1] as i32 + b[q + 1] as i32) >> 2;
