@@ -1,4 +1,5 @@
 //! A tray icon with a small menu: show the window, start or stop the recording, quit.
+use crate::i18n::tr;
 use crate::ipc::Cmd;
 use eframe::egui;
 use std::sync::mpsc::Sender;
@@ -7,7 +8,9 @@ use tray_icon::{Icon, MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, 
 
 pub struct Tray {
     _icon: TrayIcon,
+    show: MenuItem,
     toggle: MenuItem,
+    quit: MenuItem,
     recording: bool,
 }
 
@@ -17,9 +20,9 @@ impl Tray {
         let (w, h) = img.dimensions();
         let icon = Icon::from_rgba(img.into_raw(), w, h).ok()?;
 
-        let show = MenuItem::new("Show mnRekord", true, None);
-        let toggle = MenuItem::new("Start recording", true, None);
-        let quit = MenuItem::new("Quit", true, None);
+        let show = MenuItem::new(tr("Show mnRekord"), true, None);
+        let toggle = MenuItem::new(tr("Start recording"), true, None);
+        let quit = MenuItem::new(tr("Quit"), true, None);
         let menu = Menu::new();
         menu.append_items(&[&show, &toggle, &PredefinedMenuItem::separator(), &quit]).ok()?;
 
@@ -46,13 +49,20 @@ impl Tray {
         }));
 
         let tray = TrayIconBuilder::new().with_menu(Box::new(menu)).with_tooltip("mnRekord").with_icon(icon).build().ok()?;
-        Some(Tray { _icon: tray, toggle, recording: false })
+        Some(Tray { _icon: tray, show, toggle, quit, recording: false })
     }
 
     pub fn set_recording(&mut self, recording: bool) {
         if recording != self.recording {
             self.recording = recording;
-            self.toggle.set_text(if recording { "Stop recording" } else { "Start recording" });
+            self.toggle.set_text(if recording { tr("Stop recording") } else { tr("Start recording") });
         }
+    }
+
+    /// After the interface language changed.
+    pub fn refresh_language(&mut self) {
+        self.show.set_text(tr("Show mnRekord"));
+        self.quit.set_text(tr("Quit"));
+        self.toggle.set_text(if self.recording { tr("Stop recording") } else { tr("Start recording") });
     }
 }

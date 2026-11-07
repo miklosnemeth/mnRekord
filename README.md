@@ -18,7 +18,7 @@ Documentation: [manual (PDF)](docs/mnRekord-manual.pdf), [magyar kézikönyv (PD
 - Pause, resume, markers, countdown, global shortcuts (F9 record, F10 stop, Ctrl+M marker)
 - Tray icon with show / start / stop / quit, and the recording state in the window title
 - A recording cut off by a crash can be recovered at the next start
-- Dark UI
+- Dark UI, in English or Hungarian (Preferences → General → Language; default: the Windows language)
 
 ## Build
 

@@ -1,6 +1,7 @@
 //! The app's state and flow: sources, start and stop, prompts, shortcuts, commands.
 use crate::audio::{self, AudioSource};
 use crate::config::*;
+use crate::i18n::{fill, tr, tr_str};
 use crate::ipc::{self, Cmd, Hotkeys};
 use crate::recorder::{self, Session, SessionConfig, Shared};
 use crate::win;
@@ -16,6 +17,8 @@ use std::time::{Duration, Instant};
 pub struct Launch {
     pub screenshot: Option<PathBuf>,
     pub view: String,
+    /// `--lang hu` or `--lang en`: the interface language for this run (screenshots).
+    pub lang: Option<Language>,
     pub commands: Vec<Cmd>,
 }
 
@@ -138,7 +141,11 @@ impl App {
         crate::ui::apply_theme(&cc.egui_ctx);
         let demo = opts.screenshot.is_some();
         let (cmd_tx, cmd_rx) = channel();
-        let settings = if demo { Settings::default() } else { Settings::load() };
+        let mut settings = if demo { Settings::default() } else { Settings::load() };
+        if let Some(l) = opts.lang {
+            settings.language = l;
+        }
+        crate::i18n::apply(settings.language);
         // Device lists come from a worker thread, so this thread's COM mode stays as the window system set it.
         let hot: Arc<HotState> = Default::default();
         let mut app = App {
@@ -412,7 +419,7 @@ impl App {
             return;
         }
         if !self.can_start() {
-            self.notice = Some("Turn on the screen to record.".into());
+            self.notice = Some(tr("Turn on the screen to record.").into());
             return;
         }
         self.notice = None;
@@ -445,7 +452,7 @@ impl App {
                 let _ = std::fs::remove_dir_all(&temp_dir);
                 self.clear_recovery();
                 eprintln!("start failed: {e}");
-                self.notice = Some(format!("The recording could not start: {e}"));
+                self.notice = Some(fill(tr("The recording could not start: {}"), &[&tr_str(&e)]));
                 self.start_preview();
                 return;
             }
@@ -513,7 +520,7 @@ impl App {
             ctx.request_repaint();
         });
         self.gif_job = Some(rx);
-        self.gif_msg = Some("Making the GIF...".into());
+        self.gif_msg = Some(tr("Making the GIF...").into());
     }
 
     fn poll_gif(&mut self) {
@@ -523,9 +530,9 @@ impl App {
             self.gif_msg = Some(match r {
                 Ok(p) => {
                     win::show_in_folder(&p);
-                    format!("GIF saved: {}", p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default())
+                    fill(tr("GIF saved: {}"), &[&p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default()])
                 }
-                Err(e) => format!("The GIF could not be made: {e}"),
+                Err(e) => fill(tr("The GIF could not be made: {}"), &[&e]),
             });
         }
     }
@@ -559,14 +566,14 @@ impl App {
             return;
         }
         if let Err(e) = result {
-            self.notice = Some(format!("An error occurred in the Recorder: {e}. The recording can be recovered at the next start."));
+            self.notice = Some(fill(tr("An error occurred in the Recorder: {}. The recording can be recovered at the next start."), &[&tr_str(&e)]));
             return;
         }
         if let Some(e) = error {
-            self.notice = Some(format!("An error occurred in the Recorder: {e}. It stopped and saved the current recording."));
+            self.notice = Some(fill(tr("An error occurred in the Recorder: {}. It stopped and saved the current recording."), &[&tr_str(&e)]));
         }
         if self.settings.prompt_for_name && !force_auto_name {
-            let picked = rfd::FileDialog::new().add_filter("MP4 video", &["mp4"]).set_file_name(self.auto_name()).set_directory(&self.settings.output_folder).save_file();
+            let picked = rfd::FileDialog::new().add_filter(tr("MP4 video"), &["mp4"]).set_file_name(self.auto_name()).set_directory(&self.settings.output_folder).save_file();
             match picked {
                 Some(p) => self.save_to(&dir, p.with_extension("mp4")),
                 None => self.prompt = Some(Prompt::SaveOrDelete(dir)),
@@ -574,7 +581,7 @@ impl App {
         } else {
             let folder = PathBuf::from(&self.settings.output_folder);
             if let Err(e) = std::fs::create_dir_all(&folder) {
-                self.notice = Some(format!("The output folder isn't available ({e}). The recording can be recovered at the next start."));
+                self.notice = Some(fill(tr("The output folder isn't available ({}). The recording can be recovered at the next start."), &[&e]));
                 return;
             }
             let dest = recorder::unique_path(folder.join(self.auto_name()));
@@ -595,7 +602,7 @@ impl App {
                     self.ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             }
-            Err(e) => self.notice = Some(format!("The recording could not be saved ({e}). It can be recovered at the next start.")),
+            Err(e) => self.notice = Some(fill(tr("The recording could not be saved ({}). It can be recovered at the next start."), &[&e])),
         }
     }
 
@@ -709,7 +716,7 @@ impl App {
 
     pub fn set_system_audio(&mut self, on: bool) {
         if on && !self.demo && !std::thread::spawn(audio::has_playback_device).join().unwrap_or(false) {
-            self.notice = Some("Unable to record system audio. Please connect or enable a playback device and try again.".into());
+            self.notice = Some(tr("Unable to record system audio. Please connect or enable a playback device and try again.").into());
             self.settings.record_system = false;
         } else {
             self.settings.record_system = on;
@@ -734,7 +741,7 @@ impl App {
         let Some(px) = win::grab_rgba(vs, w, h) else {
             win::mask_thread_windows(false);
             self.mode = Mode::Idle;
-            self.notice = Some("The screen could not be read.".into());
+            self.notice = Some(tr("The screen could not be read.").into());
             return;
         };
         let img = egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], &px);
@@ -810,7 +817,7 @@ impl App {
         }
         let title = match &self.rec {
             Some(r) if r.session.shared.clock.running() => format!("● {}  {APP_NAME}", r.timer_text),
-            Some(r) => format!("Paused {}  {APP_NAME}", r.timer_text),
+            Some(r) => format!("{} {}  {APP_NAME}", tr("Paused"), r.timer_text),
             None => APP_NAME.to_string(),
         };
         if title != self.cur_title {

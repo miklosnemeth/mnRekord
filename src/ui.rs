@@ -1,6 +1,7 @@
 //! The look: a dark desk with cards, a stage for the region, and a slim recording bar.
 use crate::app::*;
 use crate::config::*;
+use crate::i18n::{fill, tr};
 use crate::win;
 use eframe::egui::{self, Align, Color32, CornerRadius, FontId, Layout, Pos2, Rect as URect, RichText, Sense, Shadow, Stroke, StrokeKind};
 use std::sync::Arc;
@@ -188,13 +189,13 @@ impl App {
                 ui.painter().circle_filled(r.center(), 13.0, CORAL);
                 ui.painter().circle_filled(r.center(), 5.0, Color32::WHITE);
                 ui.label(RichText::new(APP_NAME).font(bold(19.0)));
-                let msg = if self.can_start() { "Ready to record" } else { "Choose something to record" };
+                let msg = if self.can_start() { tr("Ready to record") } else { tr("Choose something to record") };
                 let col = if self.can_start() { TEAL } else { AMBER };
                 egui::Frame::new().fill(col.gamma_multiply(0.14)).corner_radius(5).inner_margin(egui::Margin::symmetric(10, 3)).show(ui, |ui| {
                     ui.label(RichText::new(msg).size(12.0).color(col.gamma_multiply(0.9)));
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if icon_button(ui, Icon::Gear, "Preferences").clicked() {
+                    if icon_button(ui, Icon::Gear, tr("Preferences")).clicked() {
                         self.prefs_open = true;
                     }
                 });
@@ -204,7 +205,7 @@ impl App {
 
     fn record_button(&mut self, ui: &mut egui::Ui) {
         let can = self.can_start();
-        let label = RichText::new(format!("●  Record   {}", self.settings.shortcut_record.label())).font(bold(16.0)).color(Color32::WHITE);
+        let label = RichText::new(fill(tr("●  Record   {}"), &[&self.settings.shortcut_record.label()])).font(bold(16.0)).color(Color32::WHITE);
         let btn = egui::Button::new(label).fill(if can { CORAL } else { OFF }).corner_radius(5);
         let size = egui::vec2(ui.available_width(), 46.0);
         if ui.add_enabled(can, |ui: &mut egui::Ui| ui.add_sized(size, btn)).clicked() {
@@ -212,7 +213,7 @@ impl App {
         }
         if let Some(p) = self.last_saved.clone() {
             ui.horizontal(|ui| {
-                ui.label(RichText::new("Last recording").small().color(MUTED));
+                ui.label(RichText::new(tr("Last recording")).small().color(MUTED));
                 let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
                 if ui.link(RichText::new(name).small()).clicked() {
                     win::show_in_folder(&p);
@@ -220,7 +221,7 @@ impl App {
             });
             ui.horizontal(|ui| {
                 let busy = self.gif_job.is_some();
-                if ui.add_enabled(!busy, egui::Button::new(RichText::new("Make GIF").small()).corner_radius(5)).on_hover_text("An animated GIF of the last recording (up to 30 s, 640 px wide)").clicked() {
+                if ui.add_enabled(!busy, egui::Button::new(RichText::new(tr("Make GIF")).small()).corner_radius(5)).on_hover_text(tr("An animated GIF of the last recording (up to 30 s, 640 px wide)")).clicked() {
                     self.make_gif();
                 }
                 if let Some(m) = &self.gif_msg {
@@ -265,10 +266,10 @@ impl App {
         let r = self.region();
         card(ui, |ui| {
             ui.set_width(ui.available_width());
-            if Self::source_head(ui, Icon::Screen, "Screen", &mut self.settings.record_screen) {
+            if Self::source_head(ui, Icon::Screen, tr("Screen"), &mut self.settings.record_screen) {
                 self.persist();
             }
-            let text = if self.settings.record_screen { format!("{} x {} at {} fps", r.w & !1, r.h & !1, self.settings.max_fps) } else { "Off".to_string() };
+            let text = if self.settings.record_screen { fill(tr("{} x {} at {} fps"), &[&(r.w & !1), &(r.h & !1), &self.settings.max_fps]) } else { tr("Off").to_string() };
             ui.label(RichText::new(text).small().color(MUTED));
         });
     }
@@ -278,7 +279,7 @@ impl App {
         card(ui, |ui| {
             ui.set_width(ui.available_width());
             let mut on = self.settings.record_system;
-            if Self::source_head(ui, Icon::Speaker, "System audio", &mut on) {
+            if Self::source_head(ui, Icon::Speaker, tr("System audio"), &mut on) {
                 self.set_system_audio(on);
             }
             meter(ui, ui.available_width(), level);
@@ -299,8 +300,8 @@ impl App {
                 ui.set_width(ui.available_width());
                 ui.set_height(ui.available_height().max(0.0));
                 ui.horizontal(|ui| {
-                    ui.label(RichText::new("Stage").font(bold(15.0)));
-                    ui.label(RichText::new("Drag the frame, or its edges, to choose what gets recorded.").small().color(MUTED));
+                    ui.label(RichText::new(tr("Stage")).font(bold(15.0)));
+                    ui.label(RichText::new(tr("Drag the frame, or its edges, to choose what gets recorded.")).small().color(MUTED));
                 });
                 let size = egui::vec2(ui.available_width(), (ui.available_height() - 4.0).max(120.0));
                 let (rect, resp) = ui.allocate_exact_size(size, Sense::click_and_drag());
@@ -329,7 +330,7 @@ impl App {
                 p.image(id, r, uv, Color32::WHITE);
             }
             p.rect_stroke(r, 5, Stroke::new(1.0, OFF), StrokeKind::Inside);
-            p.text(r.left_top() + egui::vec2(8.0, 6.0), egui::Align2::LEFT_TOP, format!("Screen {}", i + 1), FontId::proportional(11.0), Color32::from_white_alpha(230));
+            p.text(r.left_top() + egui::vec2(8.0, 6.0), egui::Align2::LEFT_TOP, fill(tr("Screen {}"), &[&(i + 1)]), FontId::proportional(11.0), Color32::from_white_alpha(230));
         }
         if !self.settings.record_screen {
             return;
@@ -397,21 +398,21 @@ impl App {
         ui.horizontal_wrapped(|ui| {
             for (i, m) in self.monitors.clone().iter().enumerate() {
                 let selected = region == *m;
-                if ui.selectable_label(selected, format!("Screen {}", i + 1)).clicked() {
+                if ui.selectable_label(selected, fill(tr("Screen {}"), &[&(i + 1)])).clicked() {
                     self.picked_window = None;
                     self.set_region_fitted(*m);
                 }
             }
-            if ui.add(egui::Button::new("Draw on screen").stroke(Stroke::new(1.0, LINE)).corner_radius(5).min_size(egui::vec2(0.0, 30.0))).clicked() {
+            if ui.add(egui::Button::new(tr("Draw on screen")).stroke(Stroke::new(1.0, LINE)).corner_radius(5).min_size(egui::vec2(0.0, 30.0))).clicked() {
                 self.begin_pick();
             }
         });
         let (mut w, mut h) = (region.w, region.h);
         ui.horizontal(|ui| {
-            ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Width").small().color(MUTED)));
+            ui.add_sized([64.0, 28.0], egui::Label::new(RichText::new(tr("Width")).small().color(MUTED)));
             let a = ui.add(egui::DragValue::new(&mut w).range(MIN_REGION..=vs.w));
             ui.add_space(8.0);
-            ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Height").small().color(MUTED)));
+            ui.add_sized([64.0, 28.0], egui::Label::new(RichText::new(tr("Height")).small().color(MUTED)));
             let b = ui.add(egui::DragValue::new(&mut h).range(MIN_REGION..=vs.h));
             if a.changed() || b.changed() {
                 if let Some((rw, rh)) = self.settings.aspect {
@@ -434,10 +435,10 @@ impl App {
             _ => PRESETS.to_vec(),
         };
         ui.horizontal(|ui| {
-            ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Ratio").small().color(MUTED)));
+            ui.add_sized([64.0, 28.0], egui::Label::new(RichText::new(tr("Ratio")).small().color(MUTED)));
             let name = |a: Option<(i32, i32)>| match a {
                 Some((w, h)) => format!("{w}:{h}"),
-                None => "Free".to_string(),
+                None => tr("Free").to_string(),
             };
             egui::ComboBox::from_id_salt("ratio").width(190.0).selected_text(name(self.settings.aspect)).show_ui(ui, |ui| {
                 for a in [Some((16, 9)), Some((9, 16)), None] {
@@ -448,12 +449,12 @@ impl App {
             });
         });
         ui.horizontal(|ui| {
-            ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Size").small().color(MUTED)));
+            ui.add_sized([64.0, 28.0], egui::Label::new(RichText::new(tr("Size")).small().color(MUTED)));
             let current = sizes
                 .iter()
                 .find(|s| s.1 == region.w && s.2 == region.h)
                 .map(|s| format!("{} ({} x {})", s.0, s.1, s.2))
-                .unwrap_or_else(|| format!("Custom ({} x {})", region.w, region.h));
+                .unwrap_or_else(|| fill(tr("Custom ({} x {})"), &[&region.w, &region.h]));
             egui::ComboBox::from_id_salt("size").width(190.0).selected_text(current).show_ui(ui, |ui| {
                 for (name, w, h) in sizes {
                     let fits = w <= vs.w && h <= vs.h;
@@ -471,8 +472,8 @@ impl App {
         });
         if let Some(title) = self.picked_window.as_ref().map(|w| w.title.clone()) {
             ui.horizontal(|ui| {
-                ui.add_sized([44.0, 28.0], egui::Label::new(RichText::new("Follow").small().color(MUTED)));
-                toggle(ui, &mut self.settings.follow_window).on_hover_text("The recorded frame moves with the window it was picked from");
+                ui.add_sized([64.0, 28.0], egui::Label::new(RichText::new(tr("Follow")).small().color(MUTED)));
+                toggle(ui, &mut self.settings.follow_window).on_hover_text(tr("The recorded frame moves with the window it was picked from"));
                 let short: String = title.chars().take(24).collect();
                 ui.label(RichText::new(short).small().color(MUTED));
             });
@@ -493,15 +494,15 @@ impl App {
             ui.set_width(560.0);
             ui.set_min_height(380.0);
             ui.horizontal(|ui| {
-                ui.heading("Preferences");
+                ui.heading(tr("Preferences"));
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if icon_button(ui, Icon::Close, "Close").clicked() {
+                    if icon_button(ui, Icon::Close, tr("Close")).clicked() {
                         self.close_prefs();
                     }
                 });
             });
             ui.horizontal(|ui| {
-                for (i, t) in ["General", "Inputs", "Files", "Shortcuts"].iter().enumerate() {
+                for (i, t) in [tr("General"), tr("Inputs"), tr("Files"), tr("Shortcuts")].iter().enumerate() {
                     if ui.selectable_label(self.prefs_tab == i, *t).clicked() {
                         self.prefs_tab = i;
                     }
@@ -528,17 +529,32 @@ impl App {
     }
 
     fn prefs_general(&mut self, ui: &mut egui::Ui) {
+        let before = self.settings.language;
+        ui.horizontal(|ui| {
+            ui.label(tr("Language"));
+            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                ui.selectable_value(&mut self.settings.language, Language::Hungarian, "Magyar");
+                ui.selectable_value(&mut self.settings.language, Language::English, "English");
+                ui.selectable_value(&mut self.settings.language, Language::Auto, tr("Auto"));
+            });
+        });
+        if self.settings.language != before {
+            crate::i18n::apply(self.settings.language);
+            if let Some(t) = &mut self.tray {
+                t.refresh_language();
+            }
+        }
         let s = &mut self.settings;
         let rows: [(&str, &mut bool); 9] = [
-            ("Show recorder countdown", &mut s.show_countdown),
-            ("Do not capture recorder on screen", &mut s.use_window_mask),
-            ("Restore cursor location after pause", &mut s.restore_cursor),
-            ("Show the mouse pointer in the recording", &mut s.show_cursor),
-            ("Highlight the pointer and clicks", &mut s.highlight_cursor),
-            ("Exit after stopped", &mut s.exit_on_stop),
-            ("Open recording after stopped", &mut s.open_on_stop),
-            ("Show region indicator", &mut s.show_region_indicator),
-            ("Automatically minimize recording window", &mut s.auto_minimize),
+            (tr("Show recorder countdown"), &mut s.show_countdown),
+            (tr("Do not capture recorder on screen"), &mut s.use_window_mask),
+            (tr("Restore cursor location after pause"), &mut s.restore_cursor),
+            (tr("Show the mouse pointer in the recording"), &mut s.show_cursor),
+            (tr("Highlight the pointer and clicks"), &mut s.highlight_cursor),
+            (tr("Exit after stopped"), &mut s.exit_on_stop),
+            (tr("Open recording after stopped"), &mut s.open_on_stop),
+            (tr("Show region indicator"), &mut s.show_region_indicator),
+            (tr("Automatically minimize recording window"), &mut s.auto_minimize),
         ];
         for (label, v) in rows {
             ui.horizontal(|ui| {
@@ -551,59 +567,59 @@ impl App {
     }
 
     fn prefs_inputs(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new("Screen").font(bold(15.0)));
+        ui.label(RichText::new(tr("Screen")).font(bold(15.0)));
         ui.horizontal(|ui| {
-            ui.label("Maximum frame rate");
+            ui.label(tr("Maximum frame rate"));
             for f in SCREEN_RATES {
                 ui.selectable_value(&mut self.settings.max_fps, f, format!("{f} fps"));
             }
         });
         ui.horizontal(|ui| {
-            ui.label("Quality");
+            ui.label(tr("Quality"));
             ui.add(egui::Slider::new(&mut self.settings.video_quality, 1..=100));
         });
         ui.horizontal(|ui| {
-            ui.label("Start a new file every");
+            ui.label(tr("Start a new file every"));
             let mut minutes = self.settings.split_seconds / 60;
-            if ui.add(egui::DragValue::new(&mut minutes).range(0..=240).suffix(" min")).changed() {
+            if ui.add(egui::DragValue::new(&mut minutes).range(0..=240).suffix(tr(" min"))).changed() {
                 self.settings.split_seconds = minutes * 60;
             }
-            ui.label(RichText::new("(0 = one file)").small().color(MUTED));
+            ui.label(RichText::new(tr("(0 = one file)")).small().color(MUTED));
         });
         ui.horizontal(|ui| {
-            ui.label("Use the graphics card to encode, when possible");
+            ui.label(tr("Use the graphics card to encode, when possible"));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 toggle(ui, &mut self.settings.hardware_encoder);
             });
         });
         let name = crate::encode::ENCODER_NAME.lock().unwrap().clone();
         if !name.is_empty() {
-            ui.label(RichText::new(format!("Encoder of the last recording: {name}")).small().color(MUTED));
+            ui.label(RichText::new(fill(tr("Encoder of the last recording: {}"), &[&name])).small().color(MUTED));
         }
     }
 
     fn prefs_files(&mut self, ui: &mut egui::Ui) {
-        ui.label(RichText::new("Name").font(bold(15.0)));
-        ui.radio_value(&mut self.settings.prompt_for_name, false, "Automatic file name");
-        ui.radio_value(&mut self.settings.prompt_for_name, true, "Prompt for file name");
+        ui.label(RichText::new(tr("Name")).font(bold(15.0)));
+        ui.radio_value(&mut self.settings.prompt_for_name, false, tr("Automatic file name"));
+        ui.radio_value(&mut self.settings.prompt_for_name, true, tr("Prompt for file name"));
         ui.horizontal(|ui| {
-            ui.label("File name template");
+            ui.label(tr("File name template"));
             ui.add(egui::TextEdit::singleline(&mut self.settings.name_template).desired_width(220.0));
         });
-        ui.label(RichText::new("{date}  {time}  {window}  (the window picked on screen, or \"screen\")").small().color(MUTED));
+        ui.label(RichText::new(tr("{date}  {time}  {window}  (the window picked on screen, or \"screen\")")).small().color(MUTED));
         ui.separator();
-        folder_row(ui, "Default output folder", &mut self.settings.output_folder);
-        folder_row(ui, "Temporary storage folder", &mut self.settings.temp_folder);
+        folder_row(ui, tr("Default output folder"), &mut self.settings.output_folder);
+        folder_row(ui, tr("Temporary storage folder"), &mut self.settings.temp_folder);
     }
 
     fn prefs_shortcuts(&mut self, ui: &mut egui::Ui) {
-        let rows = ["Record, pause and resume", "Stop", "Add marker"];
+        let rows = [tr("Record, pause and resume"), tr("Stop"), tr("Add marker")];
         for (i, name) in rows.iter().enumerate() {
             let current = self.shortcut(i).label();
             ui.horizontal(|ui| {
                 ui.label(*name);
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    let text = if self.capture_key == Some(i) { "Press a key...".to_string() } else { current };
+                    let text = if self.capture_key == Some(i) { tr("Press a key...").to_string() } else { current };
                     if ui.button(text).clicked() {
                         self.capture_key = Some(i);
                         self.shortcut_msg = None;
@@ -615,7 +631,7 @@ impl App {
         if let Some(i) = self.capture_key {
             self.read_shortcut_key(ui.ctx(), i);
         }
-        if ui.button("Restore defaults").clicked() {
+        if ui.button(tr("Restore defaults")).clicked() {
             let d = Settings::default();
             self.settings.shortcut_record = d.shortcut_record;
             self.settings.shortcut_stop = d.shortcut_stop;
@@ -629,7 +645,7 @@ impl App {
         }
         let failed = self.hotkeys.as_ref().map(|h| h.failed.lock().unwrap().clone()).unwrap_or_default();
         if !failed.is_empty() {
-            ui.label(RichText::new(format!("Could not assign the following shortcuts: {}", failed.join(", "))).color(CORAL));
+            ui.label(RichText::new(fill(tr("Could not assign the following shortcuts: {}"), &[&failed.join(", ")])).color(CORAL));
         }
     }
 
@@ -654,10 +670,10 @@ impl App {
             let sc = Shortcut { key: key.name().to_string(), ctrl: m.ctrl, alt: m.alt, shift: m.shift };
             let others = [0, 1, 2].into_iter().filter(|o| *o != i).find(|o| *self.shortcut(*o) == sc);
             if sc.vk().is_none() {
-                self.shortcut_msg = Some(format!("{} can't be used as a shortcut", sc.label()));
+                self.shortcut_msg = Some(fill(tr("{} can't be used as a shortcut"), &[&sc.label()]));
             } else if let Some(o) = others {
-                let name = ["Record, pause and resume", "Stop", "Add marker"][o];
-                self.shortcut_msg = Some(format!("The shortcut {} conflicts with {}", sc.label(), name));
+                let name = [tr("Record, pause and resume"), tr("Stop"), tr("Add marker")][o];
+                self.shortcut_msg = Some(fill(tr("The shortcut {} conflicts with {}"), &[&sc.label(), &name]));
             } else {
                 *self.shortcut(i) = sc;
                 self.shortcut_msg = None;
@@ -671,8 +687,8 @@ impl App {
     fn draw_prompt(&mut self, ui: &mut egui::Ui) {
         let ctx = ui.ctx().clone();
         let (title, body, a, b) = match &self.prompt {
-            Some(Prompt::Recover(_)) => ("Recover recording", "A recording wasn't finished the last time. Keep what was recorded?", "Recover", "Delete"),
-            Some(Prompt::SaveOrDelete(_)) => ("Save recording", "The recording hasn't been saved yet.", "Save", "Delete"),
+            Some(Prompt::Recover(_)) => (tr("Recover recording"), tr("A recording wasn't finished the last time. Keep what was recorded?"), tr("Recover"), tr("Delete")),
+            Some(Prompt::SaveOrDelete(_)) => (tr("Save recording"), tr("The recording hasn't been saved yet."), tr("Save"), tr("Delete")),
             _ => return,
         };
         let mut answer = None;
@@ -699,7 +715,7 @@ impl App {
             self.start_preview();
             return;
         }
-        let picked = rfd::FileDialog::new().add_filter("MP4 video", &["mp4"]).set_file_name("recovered.mp4").set_directory(&self.settings.output_folder).save_file();
+        let picked = rfd::FileDialog::new().add_filter(tr("MP4 video"), &["mp4"]).set_file_name("recovered.mp4").set_directory(&self.settings.output_folder).save_file();
         match picked {
             Some(p) => {
                 self.save_to(&dir, p.with_extension("mp4"));
@@ -728,14 +744,14 @@ impl App {
                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
             }
             if let Some(Prompt::Delete { quit, was_running }) = self.prompt {
-                let msg = if quit { "Are you sure you want to delete this recording and quit?" } else { "Are you sure you want to delete this recording?" };
+                let msg = if quit { tr("Are you sure you want to delete this recording and quit?") } else { tr("Are you sure you want to delete this recording?") };
                 ui.horizontal_centered(|ui| {
                     ui.label(RichText::new(msg).font(bold(14.0)));
                     ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                        if pill(ui, "No", CARD, INK).clicked() {
+                        if pill(ui, tr("No"), CARD, INK).clicked() {
                             self.answer_delete(false, quit, was_running);
                         }
-                        if pill(ui, "Yes", CORAL, Color32::WHITE).clicked() {
+                        if pill(ui, tr("Yes"), CORAL, Color32::WHITE).clicked() {
                             self.answer_delete(true, quit, was_running);
                         }
                     });
@@ -749,24 +765,24 @@ impl App {
                 ui.painter().circle_filled(r.center(), 6.0, if lit { if running { CORAL } else { AMBER } } else { CORAL.gamma_multiply(0.3) });
                 ui.label(RichText::new(timer).font(bold(20.0)));
                 ui.add_space(6.0);
-                let pause_text = if running || counting { "Pause" } else { "Resume" };
+                let pause_text = if running || counting { tr("Pause") } else { tr("Resume") };
                 if ui.add_enabled(!counting, egui::Button::new(pause_text).corner_radius(5).min_size(egui::vec2(72.0, 32.0))).clicked() {
                     self.toggle_pause();
                 }
-                if pill(ui, "Stop", CORAL, Color32::WHITE).on_hover_text(self.settings.shortcut_stop.label()).clicked() {
+                if pill(ui, tr("Stop"), CORAL, Color32::WHITE).on_hover_text(self.settings.shortcut_stop.label()).clicked() {
                     self.stop_recording(false);
                     return;
                 }
-                if ui.add_enabled(self.settings.record_screen, egui::Button::new("Marker").corner_radius(5).min_size(egui::vec2(0.0, 32.0))).on_hover_text(self.settings.shortcut_marker.label()).clicked() {
+                if ui.add_enabled(self.settings.record_screen, egui::Button::new(tr("Marker")).corner_radius(5).min_size(egui::vec2(0.0, 32.0))).on_hover_text(self.settings.shortcut_marker.label()).clicked() {
                     if let Some(r) = &self.rec {
                         r.session.shared.add_marker();
                     }
                 }
-                if ui.add(egui::Button::new("Restart").corner_radius(5).min_size(egui::vec2(0.0, 32.0))).clicked() {
+                if ui.add(egui::Button::new(tr("Restart")).corner_radius(5).min_size(egui::vec2(0.0, 32.0))).clicked() {
                     self.ask_delete(false);
                 }
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                    if icon_button(ui, Icon::Close, "Delete this recording and quit").clicked() {
+                    if icon_button(ui, Icon::Close, tr("Delete this recording and quit")).clicked() {
                         self.ask_delete(true);
                     }
                     ui.vertical(|ui| {
@@ -791,7 +807,7 @@ impl App {
         let area = if self.settings.record_screen { self.region() } else { self.monitors.first().copied().unwrap_or(self.vscreen) };
         let size = egui::vec2(360.0, 240.0);
         let pos = egui::pos2((area.x + area.w / 2) as f32 / ppp - size.x / 2.0, (area.y + area.h / 2) as f32 / ppp - size.y / 2.0);
-        let hint = format!("Press {} to stop the recording.", self.settings.shortcut_stop.label());
+        let hint = fill(tr("Press {} to stop the recording."), &[&self.settings.shortcut_stop.label()]);
         let builder = egui::ViewportBuilder::default()
             .with_title("Countdown")
             .with_inner_size(size)
@@ -881,7 +897,7 @@ impl App {
                 painter.line_segment([mr.left_center(), mr.right_center()], Stroke::new(1.0, CORAL));
                 let help = URect::from_center_size(egui::pos2(full.center().x, full.top() + 40.0), egui::vec2(420.0, 34.0));
                 painter.rect_filled(help, 5, OVERLAY);
-                painter.text(help.center(), egui::Align2::CENTER_CENTER, "Click a window or screen, or drag a rectangle. Esc cancels.", FontId::proportional(13.0), Color32::WHITE);
+                painter.text(help.center(), egui::Align2::CENTER_CENTER, tr("Click a window or screen, or drag a rectangle. Esc cancels."), FontId::proportional(13.0), Color32::WHITE);
                 ctx.set_cursor_icon(egui::CursorIcon::Crosshair);
                 if resp.drag_stopped() {
                     p.press = None;
@@ -977,7 +993,7 @@ fn folder_row(ui: &mut egui::Ui, label: &str, value: &mut String) {
     ui.label(label);
     ui.horizontal(|ui| {
         ui.add(egui::TextEdit::singleline(value).desired_width(ui.available_width() - 90.0));
-        if ui.button("Browse").clicked() {
+        if ui.button(tr("Browse")).clicked() {
             if let Some(p) = rfd::FileDialog::new().set_directory(value.as_str()).pick_folder() {
                 *value = p.to_string_lossy().into_owned();
             }

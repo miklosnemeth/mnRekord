@@ -4,6 +4,7 @@ mod audio;
 mod config;
 mod encode;
 mod gif_export;
+mod i18n;
 mod ipc;
 mod recorder;
 mod screen;
@@ -34,6 +35,14 @@ fn main() -> eframe::Result<()> {
     let mut opts = app::Launch::default();
     if let Some(i) = args.iter().position(|a| a == "--screenshot") {
         opts.screenshot = args.get(i + 1).map(std::path::PathBuf::from);
+        args.drain(i..(i + 2).min(args.len()));
+    }
+    if let Some(i) = args.iter().position(|a| a == "--lang") {
+        opts.lang = match args.get(i + 1).map(String::as_str) {
+            Some("hu") => Some(config::Language::Hungarian),
+            Some("en") => Some(config::Language::English),
+            _ => None,
+        };
         args.drain(i..(i + 2).min(args.len()));
     }
     if let Some(i) = args.iter().position(|a| a == "--view") {

@@ -123,9 +123,20 @@ impl Shortcut {
     }
 }
 
+/// The language of the interface.
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum Language {
+    /// Follow the Windows display language.
+    #[default]
+    Auto,
+    English,
+    Hungarian,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(default)]
 pub struct Settings {
+    pub language: Language,
     pub show_countdown: bool,
     pub use_window_mask: bool,
     pub restore_cursor: bool,
@@ -166,6 +177,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            language: Language::Auto,
             show_countdown: true,
             use_window_mask: true,
             restore_cursor: true,
