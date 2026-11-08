@@ -11,6 +11,23 @@ use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 /// Name of the video encoder the last recording opened (for the preferences).
 pub static ENCODER_NAME: Mutex<String> = Mutex::new(String::new());
 
+/// Picture buffers the writer is done with, handed back to the screen thread so that a new frame
+/// doesn't have to allocate (and fault in) several megabytes.
+static SPARE: Mutex<Vec<Vec<u8>>> = Mutex::new(Vec::new());
+const SPARE_MAX: usize = 4;
+
+/// An empty buffer for the next picture, reusing an old one when there is one.
+pub fn spare_buffer() -> Vec<u8> {
+    SPARE.lock().unwrap().pop().unwrap_or_default()
+}
+
+fn give_back(b: Vec<u8>) {
+    let mut s = SPARE.lock().unwrap();
+    if s.len() < SPARE_MAX {
+        s.push(b);
+    }
+}
+
 pub const AUDIO_RATE: u32 = 48_000;
 pub const AUDIO_CHANNELS: u32 = 2;
 
@@ -74,12 +91,19 @@ struct Sink {
 fn pump(sink: &Sink, rx: &Receiver<Packet>) -> Result<(), String> {
     for p in rx {
         let r = match p {
-            Packet::Video { nv12, time, duration } => write(&sink.writer, sink.video, &nv12, time, duration),
+            Packet::Video { nv12, time, duration } => {
+                let r = write(&sink.writer, sink.video, &nv12, time, duration);
+                give_back(nv12);
+                r
+            }
             Packet::Audio { pcm, time, duration } => match sink.audio {
                 Some(a) => write(&sink.writer, a, &pcm, time, duration),
                 None => Ok(()),
             },
-            Packet::Finish => return Ok(()),
+            Packet::Finish => {
+                SPARE.lock().unwrap().clear();
+                return Ok(());
+            }
         };
         r.map_err(|e| format!("Video Write Failed ({e})"))?;
     }

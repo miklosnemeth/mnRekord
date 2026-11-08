@@ -269,7 +269,7 @@ fn screen_loop(mut g: ScreenGrabber, region: Rect, fps: u32, follow: Option<Foll
             continue;
         }
         let time = sh.clock.ticks();
-        let mut nv12 = Vec::new();
+        let mut nv12 = crate::encode::spare_buffer();
         bgra_to_nv12(bgra, w * 4, w, h, &mut nv12);
         out.video(nv12, time, duration, &sh);
     }

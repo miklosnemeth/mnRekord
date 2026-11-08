@@ -16,7 +16,8 @@ struct Output {
     ctx: ID3D11DeviceContext,
     output: IDXGIOutput1,
     dup: Option<IDXGIOutputDuplication>,
-    staging: Option<ID3D11Texture2D>,
+    /// CPU-readable copy of the recorded part of this monitor, with its width and height.
+    staging: Option<(ID3D11Texture2D, i32, i32)>,
     rect: Rect,
 }
 
@@ -177,33 +178,39 @@ impl ScreenGrabber {
             return;
         }
         let tex: Option<ID3D11Texture2D> = res.and_then(|r| r.cast().ok());
-        if let (Some(tex), true) = (tex, info.LastPresentTime != 0 || out.staging.is_none()) {
-            if out.staging.is_none() {
+        // Only the part of the monitor inside the region is copied off the GPU, not the whole desktop.
+        let part = out.rect.intersect(&region);
+        if let (Some(tex), Some(part)) = (tex, part) {
+            let fits = out.staging.as_ref().is_some_and(|(_, w, h)| (*w, *h) == (part.w, part.h));
+            if !fits {
                 let mut d = D3D11_TEXTURE2D_DESC::default();
                 tex.GetDesc(&mut d);
+                d.Width = part.w as u32;
+                d.Height = part.h as u32;
+                d.MipLevels = 1;
+                d.ArraySize = 1;
                 d.Usage = D3D11_USAGE_STAGING;
                 d.BindFlags = 0;
                 d.CPUAccessFlags = D3D11_CPU_ACCESS_READ.0 as u32;
                 d.MiscFlags = 0;
                 let mut st = None;
                 let _ = out.device.CreateTexture2D(&d, None, Some(&mut st));
-                out.staging = st;
+                out.staging = st.map(|t| (t, part.w, part.h));
             }
-            if let Some(st) = &out.staging {
-                out.ctx.CopyResource(st, &tex);
+            if let (Some((st, _, _)), true) = (&out.staging, info.LastPresentTime != 0 || !fits) {
+                let left = (part.x - out.rect.x) as u32;
+                let top = (part.y - out.rect.y) as u32;
+                let bx = D3D11_BOX { left, top, front: 0, right: left + part.w as u32, bottom: top + part.h as u32, back: 1 };
+                out.ctx.CopySubresourceRegion(st, 0, 0, 0, 0, &tex, 0, Some(&bx));
                 let mut m = D3D11_MAPPED_SUBRESOURCE::default();
                 if out.ctx.Map(st, 0, D3D11_MAP_READ, 0, Some(&mut m)).is_ok() {
-                    if let Some(part) = out.rect.intersect(&region) {
-                        let line = part.w as usize * 4;
-                        for row in 0..part.h as usize {
-                            let sy = (part.y - out.rect.y) as usize + row;
-                            let sx = (part.x - out.rect.x) as usize * 4;
-                            let s = (m.pData as *const u8).add(sy * m.RowPitch as usize + sx);
-                            let dy = (part.y - region.y) as usize + row;
-                            let dx = (part.x - region.x) as usize * 4;
-                            let d = self.base.as_mut_ptr().add(dy * region.w as usize * 4 + dx);
-                            std::ptr::copy_nonoverlapping(s, d, line);
-                        }
+                    let line = part.w as usize * 4;
+                    for row in 0..part.h as usize {
+                        let s = (m.pData as *const u8).add(row * m.RowPitch as usize);
+                        let dy = (part.y - region.y) as usize + row;
+                        let dx = (part.x - region.x) as usize * 4;
+                        let d = self.base.as_mut_ptr().add(dy * region.w as usize * 4 + dx);
+                        std::ptr::copy_nonoverlapping(s, d, line);
                     }
                     out.ctx.Unmap(st, 0);
                 }
