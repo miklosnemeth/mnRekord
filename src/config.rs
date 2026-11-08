@@ -185,7 +185,7 @@ impl Default for Settings {
             restore_cursor: true,
             show_cursor: true,
             highlight_cursor: true,
-            exit_on_stop: true,
+            exit_on_stop: false,
             open_on_stop: true,
             show_region_indicator: true,
             auto_minimize: false,

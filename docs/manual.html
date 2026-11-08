@@ -41,7 +41,7 @@
   <h1>mn<span>Rekord</span></h1>
   <p>User manual</p>
   <img class="shot" src="img/main.png" alt="">
-  <div class="meta">Version 0.3.0 &nbsp;·&nbsp; Windows 10 and 11</div>
+  <div class="meta">Version 0.3.1 &nbsp;·&nbsp; Windows 10 and 11</div>
 </div>
 
 <div class="wrap">
@@ -91,7 +91,7 @@
 </section>
 
 <h1 class="no-print">mnRekord manual</h1>
-<p class="byline no-print">Version 0.3.0 · Windows 10 and 11</p>
+<p class="byline no-print">Version 0.3.1 · Windows 10 and 11</p>
 
 <h2 id="intro">Introduction</h2>
 <p>mnRekord is a small screen recorder for Windows. It records a part of the screen, a whole monitor or a single window, together with the sound the computer plays, and saves the result as an MP4 video. The window is dark, simple, and has everything you need to start a recording in a few clicks.</p>
@@ -117,8 +117,8 @@
   <li>The Windows H.264 and AAC encoders. They are part of Windows; on the “N” editions install Microsoft’s <i>Media Feature Pack</i> first.</li>
 </ul>
 <h3>With the installer</h3>
-<p>Run <code>mnRekord-0.3.0-setup.exe</code>. By default it installs for your user only and needs no administrator rights; the dialog also offers an install for all users. It adds a Start menu entry, optionally a desktop icon, and an uninstaller (<i>Settings → Apps</i>). The installer is available in English and Hungarian.</p>
-<div class="note"><b>Windows SmartScreen</b>The installer is not code-signed, so Windows may show &ldquo;Windows protected your PC&rdquo; the first time. Choose <i>More info</i>, then <i>Run anyway</i>. Each release lists a SHA-256 checksum next to the downloads; to check a file, run <code>Get-FileHash mnRekord-0.3.0-setup.exe</code> in PowerShell and compare the result.</div>
+<p>Run <code>mnRekord-0.3.1-setup.exe</code>. By default it installs for your user only and needs no administrator rights; the dialog also offers an install for all users. It adds a Start menu entry, optionally a desktop icon, and an uninstaller (<i>Settings → Apps</i>). The installer is available in English and Hungarian.</p>
+<div class="note"><b>Windows SmartScreen</b>The installer is not code-signed, so Windows may show &ldquo;Windows protected your PC&rdquo; the first time. Choose <i>More info</i>, then <i>Run anyway</i>. Each release lists a SHA-256 checksum next to the downloads; to check a file, run <code>Get-FileHash mnRekord-0.3.1-setup.exe</code> in PowerShell and compare the result.</div>
 <h3>Without installing</h3>
 <p><code>mnrekord.exe</code> is a single file. Copy it anywhere and run it; nothing else is needed.</p>
 <h3>Uninstalling</h3>
@@ -207,7 +207,7 @@
 <h3>Pause and the mouse</h3>
 <p>If “Restore cursor location after pause” is on (the default), the mouse pointer jumps back to where it was when you paused, once you resume.</p>
 <h3>Stop and save</h3>
-<p>After <b>Stop</b> the recording is saved in the output folder, named after the <a href="#files">file name template</a>. If “Prompt for file name” is selected, a Save dialog asks for the name. With the defaults, the recording is then opened in your video player and mnRekord quits (“Exit after stopped”, “Open recording after stopped”).</p>
+<p>After <b>Stop</b> the recording is saved in the output folder, named after the <a href="#files">file name template</a>. If “Prompt for file name” is selected, a Save dialog asks for the name. With the defaults, the recording is then opened in your video player and mnRekord stays open, ready for the next one (“Open recording after stopped”; switch on “Exit after stopped” to quit instead).</p>
 <p>If you stop during the countdown, nothing is saved.</p>
 <h3>Low disk space</h3>
 <p>If less than about 300 MB is free on the drive of the temporary folder, the recording stops by itself and what was recorded so far is saved.</p>
@@ -245,7 +245,7 @@
   <tr><td>Restore cursor location after pause</td><td>Moves the pointer back where it was when you resume.</td></tr>
   <tr><td>Show the mouse pointer in the recording</td><td>Draws the pointer into the video.</td></tr>
   <tr><td>Highlight the pointer and clicks</td><td>A soft yellow halo around the pointer, and a red ring while a mouse button is held down.</td></tr>
-  <tr><td>Exit after stopped</td><td>Quits mnRekord when the recording is saved.</td></tr>
+  <tr><td>Exit after stopped</td><td>Quits mnRekord when the recording is saved. Off by default. The <code>writetofile</code> command always quits after saving.</td></tr>
   <tr><td>Open recording after stopped</td><td>Opens the saved file in the default player.</td></tr>
   <tr><td>Show region indicator</td><td>A thin frame on the desktop around the region while it is not the whole monitor.</td></tr>
   <tr><td>Automatically minimize recording window</td><td>Hides the bar when the recording starts (use the shortcuts or the tray icon).</td></tr>
@@ -367,7 +367,7 @@ cargo build --release</code></pre>
 
 <footer class="no-print">
   <div class="wrap">
-    <span>mnRekord 0.3.0 · MIT license</span>
+    <span>mnRekord 0.3.1 · MIT license</span>
     <span><a href="index.html">Home</a> · <a href="mnRekord-manual.pdf">Manual as PDF</a> · <a href="hu/manual.html">Magyar</a> · <a href="https://github.com/miklosnemeth/mnRekord">GitHub</a></span>
   </div>
 </footer>

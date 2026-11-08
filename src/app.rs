@@ -103,6 +103,8 @@ pub struct App {
     /// The process whose sound `system` captures (None = all sound), and the setting it was started for.
     pub system_pid: Option<u32>,
     pub system_app: String,
+    /// `writetofile` from the command line: quit after this recording, whatever the setting says.
+    pub exit_once: bool,
     pub preview: Option<Preview>,
     /// The window the region was picked from, if it was picked by a click on a window.
     pub picked_window: Option<win::WindowInfo>,
@@ -170,6 +172,7 @@ impl App {
             system: None,
             system_pid: None,
             system_app: String::new(),
+            exit_once: false,
             preview: None,
             picked_window: None,
             tray: None,
@@ -624,7 +627,7 @@ impl App {
                 if self.settings.open_on_stop {
                     win::open_path(&first);
                 }
-                if self.settings.exit_on_stop && self.notice.is_none() {
+                if (self.settings.exit_on_stop || self.exit_once) && self.notice.is_none() {
                     self.ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             }
@@ -709,7 +712,8 @@ impl App {
             }
             Cmd::Stop => self.stop_recording(false),
             Cmd::WriteToFile => {
-                self.settings.exit_on_stop = true;
+                // Quits after this recording only; the setting stays as it is.
+                self.exit_once = true;
                 self.stop_recording(true);
             }
             Cmd::Marker => {} // handled on the shortcut thread
